@@ -15,8 +15,10 @@
 	<name>gestion-parqueadero</name>
 	<description>Sistema de gestión de parqueadero</description>
 	<properties>
-		<java.version>21</java.version>
+		<java.version>17</java.version> <!-- O la versión que tengas instalada -->
 		<org.mapstruct.version>1.5.5.Final</org.mapstruct.version>
+		<sonar.projectKey>gestion-parqueadero</sonar.projectKey>
+		<sonar.projectName>gestion-parqueadero</sonar.projectName>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -108,6 +110,43 @@
 						</exclude>
 					</excludes>
 				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>0.8.11</version>
+				<configuration>
+					<excludes>
+						<!-- Excluir clases generadas por MapStruct -->
+						<exclude>**/mapper/*Impl.class</exclude>
+						<!-- Excluir DTOs, Entidades, Excepciones y Enums -->
+						<exclude>**/dto/*.class</exclude>
+						<exclude>**/entity/*.class</exclude>
+						<exclude>**/exception/*.class</exclude>
+						<exclude>**/enums/*.class</exclude>
+						<!-- Excluir la clase principal de la aplicación -->
+						<exclude>**/GestionParqueaderoApplication.class</exclude>
+					</excludes>
+				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>report</id>
+						<phase>test</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.sonarsource.scanner.maven</groupId>
+				<artifactId>sonar-maven-plugin</artifactId>
+				<version>3.11.0.3922</version>
 			</plugin>
 		</plugins>
 	</build>

@@ -1,4 +1,4 @@
-package com.parqueadero.gestion_parqueadero;
+package com.parqueadero;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
