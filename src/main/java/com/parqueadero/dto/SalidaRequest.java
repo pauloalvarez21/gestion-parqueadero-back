@@ -11,5 +11,6 @@ import lombok.NoArgsConstructor;
 @Builder
 public class SalidaRequest {
     private String codigoTicket;
+    private String placa;
     private String observaciones;
 }  

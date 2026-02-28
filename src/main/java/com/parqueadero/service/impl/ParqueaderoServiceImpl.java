@@ -72,10 +72,18 @@ public class ParqueaderoServiceImpl implements ParqueaderoService {
     @Override
     @Transactional
     public PagoResponse registrarSalida(SalidaRequest request) {
-        log.info("Procesando salida para ticket: {}", request.getCodigoTicket());
+        log.info("Procesando salida. Ticket: {}, Placa: {}", request.getCodigoTicket(), request.getPlaca());
         
-        Ticket ticket = ticketRepository.findByCodigo(request.getCodigoTicket().toUpperCase())
-            .orElseThrow(() -> new TicketNoEncontradoException("Ticket no encontrado: " + request.getCodigoTicket()));
+        Ticket ticket;
+        if (request.getCodigoTicket() != null && !request.getCodigoTicket().isBlank()) {
+            ticket = ticketRepository.findByCodigo(request.getCodigoTicket().toUpperCase())
+                .orElseThrow(() -> new TicketNoEncontradoException("Ticket no encontrado: " + request.getCodigoTicket()));
+        } else if (request.getPlaca() != null && !request.getPlaca().isBlank()) {
+            ticket = ticketRepository.findTicketActivoByPlaca(request.getPlaca().toUpperCase())
+                .orElseThrow(() -> new TicketNoEncontradoException("No se encontró ticket activo para la placa: " + request.getPlaca()));
+        } else {
+            throw new IllegalArgumentException("Debe proporcionar el código del ticket o la placa.");
+        }
         
         if (ticket.getEstado() != EstadoTicket.ACTIVO) {
             throw new TicketYaProcesadoException("El ticket ya ha sido procesado: " + ticket.getEstado());
@@ -210,11 +218,6 @@ public class ParqueaderoServiceImpl implements ParqueaderoService {
         Vehiculo vehiculo = Vehiculo.builder()
             .placa(request.getPlaca().toUpperCase())
             .tipo(TipoVehiculo.valueOf(request.getTipoVehiculo().toUpperCase()))
-            .marca(request.getMarca())
-            .modelo(request.getModelo())
-            .color(request.getColor())
-            .nombrePropietario(request.getNombrePropietario())
-            .telefonoPropietario(request.getTelefonoPropietario())
             .build();
         return vehiculoRepository.save(vehiculo);
     }

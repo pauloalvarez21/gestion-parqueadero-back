@@ -12,10 +12,5 @@ import lombok.NoArgsConstructor;
 public class EntradaRequest {
     private String placa;
     private String tipoVehiculo;
-    private String marca;
-    private String modelo;
-    private String color;
-    private String nombrePropietario;
-    private String telefonoPropietario;
     private String tipoTarifa;
 }

@@ -74,7 +74,6 @@ class ParqueaderoServiceImplTest {
         entradaRequest.setPlaca("NEW-456");
         entradaRequest.setTipoVehiculo("CARRO");
         entradaRequest.setTipoTarifa("POR_HORA");
-        entradaRequest.setMarca("Renault");
 
         vehiculo = new Vehiculo();
         vehiculo.setId(1L);
@@ -198,6 +197,23 @@ class ParqueaderoServiceImplTest {
 
         // Act & Assert
         assertThrows(TicketNoEncontradoException.class, () -> parqueaderoService.registrarSalida(salidaRequest));
+    }
+
+    @Test
+    void registrarSalida_cuandoSeUsaPlaca_deberiaProcesarSalida() {
+        // Arrange
+        salidaRequest.setCodigoTicket(null);
+        salidaRequest.setPlaca("NEW-456");
+
+        when(ticketRepository.findTicketActivoByPlaca("NEW-456"))
+                .thenReturn(Optional.of(ticket));
+
+        // Act
+        PagoResponse resultado = parqueaderoService.registrarSalida(salidaRequest);
+
+        // Assert
+        assertNotNull(resultado);
+        assertEquals(EstadoTicket.PAGADO, ticket.getEstado());
     }
 
     @Test
@@ -328,11 +344,11 @@ class ParqueaderoServiceImplTest {
 
     @ParameterizedTest(name = "POR DIA: Entrada hace {0} días -> Total a pagar: {1}")
     @CsvSource({
-            "0, 15000", // Mismo día (0 días de diferencia) -> Cobra 1 día
-            "1, 30000", // Día siguiente (1 día de diferencia) -> Cobra 2 días
-            "4, 75000"  // 4 días de diferencia -> Cobra 5 días
+            "0, 15000.00", // Mismo día (0 días de diferencia) -> Cobra 1 día
+            "1, 30000.00", // Día siguiente (1 día de diferencia) -> Cobra 2 días
+            "4, 75000.00"  // 4 días de diferencia -> Cobra 5 días
     })
-    void registrarSalida_conTarifaPorDia_deberiaCalcularCorrectamente(long diasAtras, double valorEsperadoDouble) {
+    void registrarSalida_conTarifaPorDia_deberiaCalcularCorrectamente(long diasAtras, String valorEsperadoStr) {
         // Arrange
         ticket.setTipoTarifa(TipoTarifa.POR_DIA);
         ticket.setHoraEntrada(LocalDateTime.now().minusDays(diasAtras));
@@ -344,7 +360,7 @@ class ParqueaderoServiceImplTest {
         PagoResponse resultado = parqueaderoService.registrarSalida(salidaRequest);
 
         // Assert
-        BigDecimal valorEsperado = BigDecimal.valueOf(valorEsperadoDouble);
+        BigDecimal valorEsperado = new BigDecimal(valorEsperadoStr);
         assertEquals(0, valorEsperado.compareTo(resultado.getValorTotal()));
     }
 

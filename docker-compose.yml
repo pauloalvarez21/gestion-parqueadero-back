@@ -1,0 +1,47 @@
+version: "3.8"
+
+services:
+  # Servicio de Base de Datos PostgreSQL
+  postgres-db:
+    image: postgres:15
+    container_name: parqueadero-postgres
+    environment:
+      POSTGRES_DB: parqueaderodb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432" # Permite conectar DBeaver/PgAdmin desde tu PC
+    volumes:
+      - postgres_data:/var/lib/postgresql/data # Persistencia de datos
+    networks:
+      - parqueadero-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Servicio de tu Aplicación Spring Boot
+  app-backend:
+    build: .
+    container_name: parqueadero-backend
+    ports:
+      - "8082:8082"
+    environment:
+      # Activamos el perfil 'pro' que creamos antes
+      SPRING_PROFILES_ACTIVE: pro
+      # Sobrescribimos la URL para que apunte al contenedor 'postgres-db' en lugar de localhost
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/parqueaderodb
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    networks:
+      - parqueadero-net
+
+volumes:
+  postgres_data:
+
+networks:
+  parqueadero-net:
