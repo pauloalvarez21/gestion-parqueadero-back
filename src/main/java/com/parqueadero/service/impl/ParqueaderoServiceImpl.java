@@ -29,6 +29,7 @@ public class ParqueaderoServiceImpl implements ParqueaderoService {
     private final EspacioRepository espacioRepository;
     private final VehiculoRepository vehiculoRepository;
     private final HistorialRepository historialRepository;
+    private final TarifaRepository tarifaRepository;
     private final ParqueaderoMapper mapper;
 
     @Override
@@ -130,14 +131,14 @@ public class ParqueaderoServiceImpl implements ParqueaderoService {
             throw new ConfiguracionException("La tarifa base para el espacio " + ticket.getEspacio().getCodigo() + " no está configurada correctamente.");
         }
         
-        // TODO: Las tarifas por día y mes están hardcodeadas. Idealmente, deberían ser configurables en la base de datos.
-        BigDecimal tarifaDia = new BigDecimal("15000"); // $15.000 COP por día
-        BigDecimal tarifaMes = new BigDecimal("200000"); // $200.000 COP por mes
-        
         BigDecimal valorBase = BigDecimal.ZERO;
         BigDecimal valorAdicional = BigDecimal.ZERO;
         
         switch (ticket.getTipoTarifa()) {
+            case POR_MINUTO:
+                BigDecimal tarifaMinuto = obtenerTarifaGlobal(TipoTarifa.POR_MINUTO);
+                valorBase = tarifaMinuto.multiply(new BigDecimal(minutosTotales));
+                break;
             case POR_HORA:
                 // Si el tiempo es 0 o negativo, el costo es 0.
                 if (minutosTotales <= 0) {
@@ -164,10 +165,12 @@ public class ParqueaderoServiceImpl implements ParqueaderoService {
                 valorBase = tarifaHora.multiply(new BigDecimal(horasACobrar));
                 break;
             case POR_DIA:
+                BigDecimal tarifaDia = obtenerTarifaGlobal(TipoTarifa.POR_DIA);
                 long dias = ChronoUnit.DAYS.between(entrada.toLocalDate(), salida.toLocalDate()) + 1;
                 valorBase = tarifaDia.multiply(new BigDecimal(dias));
                 break;
             case POR_MES:
+                BigDecimal tarifaMes = obtenerTarifaGlobal(TipoTarifa.POR_MES);
                 valorBase = tarifaMes;
                 break;
             case FRACCION:
@@ -197,6 +200,12 @@ public class ParqueaderoServiceImpl implements ParqueaderoService {
             .valorTotal(valorTotal.setScale(2, RoundingMode.HALF_UP))
             .mensaje("Pago calculado exitosamente")
             .build();
+    }
+
+    private BigDecimal obtenerTarifaGlobal(TipoTarifa tipo) {
+        return tarifaRepository.findByTipoTarifa(tipo)
+                .map(Tarifa::getValor)
+                .orElseThrow(() -> new ConfiguracionException("No existe tarifa configurada para " + tipo));
     }
 
     private void guardarEnHistorial(Ticket ticket) {
@@ -277,5 +286,49 @@ public class ParqueaderoServiceImpl implements ParqueaderoService {
             .ticketsHoy(ticketsHoy)
             .ticketsMes(0L)
             .build();
+    }
+
+    @Override
+    @Transactional
+    public List<EspacioDTO> agregarEspacios(AgregarEspaciosRequest request) {
+        TipoVehiculo tipo = TipoVehiculo.valueOf(request.getTipoVehiculo().toUpperCase());
+        
+        if (request.getCantidad() <= 0) {
+            throw new IllegalArgumentException("La cantidad debe ser mayor a 0");
+        }
+        if (request.getTarifaBase() == null || request.getTarifaBase().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("La tarifa base es requerida y debe ser positiva");
+        }
+
+        // Obtener espacios existentes para calcular la secuencia del código
+        List<Espacio> espaciosExistentes = espacioRepository.findAll().stream()
+                .filter(e -> e.getTipoVehiculoPermitido() == tipo)
+                .collect(Collectors.toList());
+                
+        int maxSecuencia = espaciosExistentes.stream()
+                .map(e -> {
+                    try {
+                        return Integer.parseInt(e.getCodigo().split("-")[1]);
+                    } catch (Exception ex) {
+                        return 0;
+                    }
+                })
+                .max(Integer::compare)
+                .orElse(0);
+                
+        String prefijo = tipo == TipoVehiculo.CARRO ? "C-" : (tipo == TipoVehiculo.MOTO ? "M-" : "B-");
+        
+        List<Espacio> nuevosEspacios = new java.util.ArrayList<>();
+        for (int i = 1; i <= request.getCantidad(); i++) {
+            Espacio espacio = new Espacio();
+            espacio.setCodigo(prefijo + (maxSecuencia + i));
+            espacio.setTipoVehiculoPermitido(tipo);
+            espacio.setEstado(EstadoEspacio.DISPONIBLE);
+            espacio.setTarifaBase(request.getTarifaBase());
+            nuevosEspacios.add(espacio);
+        }
+        
+        List<Espacio> guardados = espacioRepository.saveAll(nuevosEspacios);
+        return guardados.stream().map(mapper::toEspacioDTO).collect(Collectors.toList());
     }
 }

@@ -10,5 +10,6 @@ public interface ParqueaderoService {
     List<TicketDTO> listarTicketsActivos();
     List<EspacioDTO> listarEspacios();
     List<EspacioDTO> listarEspaciosDisponibles();
+    List<EspacioDTO> agregarEspacios(AgregarEspaciosRequest request);
     EstadisticasDTO obtenerEstadisticas();
 }

@@ -57,4 +57,10 @@ public class ParqueaderoController {
     public ResponseEntity<EstadisticasDTO> obtenerEstadisticas() {
         return ResponseEntity.ok(parqueaderoService.obtenerEstadisticas());
     }
+
+    @Operation(summary = "Agrega nuevos espacios de parqueadero (Admin)")
+    @PostMapping("/espacios/agregar")
+    public ResponseEntity<List<EspacioDTO>> agregarEspacios(@RequestBody AgregarEspaciosRequest request) {
+        return ResponseEntity.ok(parqueaderoService.agregarEspacios(request));
+    }
 }

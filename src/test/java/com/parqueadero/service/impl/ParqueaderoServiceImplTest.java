@@ -9,6 +9,7 @@ import com.parqueadero.dto.TicketDTO;
 import com.parqueadero.entity.Espacio;
 import com.parqueadero.entity.Historial;
 import com.parqueadero.entity.Ticket;
+import com.parqueadero.entity.Tarifa;
 import com.parqueadero.entity.Vehiculo;
 import com.parqueadero.enums.EstadoEspacio;
 import com.parqueadero.enums.EstadoTicket;
@@ -22,6 +23,7 @@ import com.parqueadero.exception.VehiculoYaEstacionadoException;
 import com.parqueadero.mapper.ParqueaderoMapper;
 import com.parqueadero.repository.EspacioRepository;
 import com.parqueadero.repository.HistorialRepository;
+import com.parqueadero.repository.TarifaRepository;
 import com.parqueadero.repository.TicketRepository;
 import com.parqueadero.repository.VehiculoRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -55,6 +57,8 @@ class ParqueaderoServiceImplTest {
     private VehiculoRepository vehiculoRepository;
     @Mock
     private HistorialRepository historialRepository;
+    @Mock
+    private TarifaRepository tarifaRepository;
     @Mock
     private ParqueaderoMapper mapper;
 
@@ -296,6 +300,8 @@ class ParqueaderoServiceImplTest {
     void registrarSalida_conTarifaPorMes_deberiaCobrarTarifaFija() {
         // Arrange
         ticket.setTipoTarifa(TipoTarifa.POR_MES);
+        Tarifa tarifaMes = new Tarifa(1L, TipoTarifa.POR_MES, new BigDecimal("200000.00"));
+        when(tarifaRepository.findByTipoTarifa(TipoTarifa.POR_MES)).thenReturn(Optional.of(tarifaMes));
         when(ticketRepository.findByCodigo(anyString())).thenReturn(Optional.of(ticket));
 
         // Act
@@ -351,6 +357,8 @@ class ParqueaderoServiceImplTest {
     void registrarSalida_conTarifaPorDia_deberiaCalcularCorrectamente(long diasAtras, String valorEsperadoStr) {
         // Arrange
         ticket.setTipoTarifa(TipoTarifa.POR_DIA);
+        Tarifa tarifaDia = new Tarifa(2L, TipoTarifa.POR_DIA, new BigDecimal("15000.00"));
+        when(tarifaRepository.findByTipoTarifa(TipoTarifa.POR_DIA)).thenReturn(Optional.of(tarifaDia));
         ticket.setHoraEntrada(LocalDateTime.now().minusDays(diasAtras));
 
         when(ticketRepository.findByCodigo(salidaRequest.getCodigoTicket().toUpperCase()))
@@ -435,5 +443,21 @@ class ParqueaderoServiceImplTest {
     void registrarEntrada_conDatosInvalidos_deberiaLanzarExcepcion() {
         entradaRequest.setTipoVehiculo("INVALIDO");
         assertThrows(IllegalArgumentException.class, () -> parqueaderoService.registrarEntrada(entradaRequest));
+    }
+
+    @Test
+    void registrarSalida_conTarifaPorMinuto_deberiaCalcularCorrectamente() {
+        // Arrange
+        ticket.setTipoTarifa(TipoTarifa.POR_MINUTO);
+        ticket.setHoraEntrada(LocalDateTime.now().minusMinutes(30)); // 30 minutos
+        Tarifa tarifaMinuto = new Tarifa(3L, TipoTarifa.POR_MINUTO, new BigDecimal("50.00")); // $50 por minuto
+        when(tarifaRepository.findByTipoTarifa(TipoTarifa.POR_MINUTO)).thenReturn(Optional.of(tarifaMinuto));
+        when(ticketRepository.findByCodigo(anyString())).thenReturn(Optional.of(ticket));
+
+        // Act
+        PagoResponse resultado = parqueaderoService.registrarSalida(salidaRequest);
+
+        // Assert
+        assertEquals(0, new BigDecimal("1500.00").compareTo(resultado.getValorTotal()));
     }
 }
