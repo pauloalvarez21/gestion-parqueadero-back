@@ -1,6 +1,7 @@
 package com.parqueadero.controller;
 
 import com.parqueadero.dto.*;
+import com.parqueadero.dto.TarifaDTO;
 import com.parqueadero.service.ParqueaderoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -46,6 +47,13 @@ public class ParqueaderoController {
     @GetMapping("/tickets/activos")
     public ResponseEntity<List<TicketDTO>> listarTicketsActivos() {
         return ResponseEntity.ok(parqueaderoService.listarTicketsActivos());
+    }
+
+    @Operation(summary = "Lista las tarifas globales configuradas",
+               description = "Devuelve las tarifas globales como POR_MINUTO, POR_DIA, etc. Las tarifas por hora o fracción son específicas de cada espacio y se pueden consultar en el detalle de cada uno a través del endpoint de /espacios.")
+    @GetMapping("/tarifas")
+    public ResponseEntity<List<TarifaDTO>> listarTarifas() {
+        return ResponseEntity.ok(parqueaderoService.listarTarifas());
     }
 
     @GetMapping("/espacios")

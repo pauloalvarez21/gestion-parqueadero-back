@@ -111,7 +111,6 @@ public class DataSeeder implements CommandLineRunner {
         if (tarifaRepository.count() == 0) {
             List<Tarifa> tarifas = new ArrayList<>();
             tarifas.add(new Tarifa(null, TipoTarifa.POR_MINUTO, new BigDecimal("50")));
-            tarifas.add(new Tarifa(null, TipoTarifa.POR_HORA, new BigDecimal("3000")));
             tarifas.add(new Tarifa(null, TipoTarifa.POR_DIA, new BigDecimal("30000")));
             tarifas.add(new Tarifa(null, TipoTarifa.POR_MES, new BigDecimal("150000")));
             tarifaRepository.saveAll(tarifas);

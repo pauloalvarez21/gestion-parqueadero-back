@@ -126,6 +126,8 @@ public class ParqueaderoServiceImpl implements ParqueaderoService {
         long horas = minutosTotales / 60; // Horas completas, para el descuento
         
         // Se obtiene la tarifa base del espacio, que se asume es la tarifa por hora.
+        // NOTA: La tarifa POR_HORA y FRACCION se basa en la 'tarifaBase' del Espacio,
+        // no en la tabla global de Tarifas. Esto permite flexibilidad (ej. tarifas distintas por tipo de espacio).
         BigDecimal tarifaHora = ticket.getEspacio().getTarifaBase();
         if (tarifaHora == null || tarifaHora.compareTo(BigDecimal.ZERO) <= 0) {
             throw new ConfiguracionException("La tarifa base para el espacio " + ticket.getEspacio().getCodigo() + " no está configurada correctamente.");
@@ -250,6 +252,18 @@ public class ParqueaderoServiceImpl implements ParqueaderoService {
             .stream()
             .map(mapper::toTicketDTO)
             .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<TarifaDTO> listarTarifas() {
+        log.info("Listando todas las tarifas globales.");
+        return tarifaRepository.findAll()
+                .stream()
+                .map(tarifa -> TarifaDTO.builder()
+                        .tipoTarifa(tarifa.getTipoTarifa().name())
+                        .valor(tarifa.getValor())
+                        .build())
+                .collect(Collectors.toList());
     }
 
     @Override
