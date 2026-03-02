@@ -63,4 +63,10 @@ public class ParqueaderoController {
     public ResponseEntity<List<EspacioDTO>> agregarEspacios(@RequestBody AgregarEspaciosRequest request) {
         return ResponseEntity.ok(parqueaderoService.agregarEspacios(request));
     }
+
+    @Operation(summary = "Elimina espacios de parqueadero disponibles (Admin)")
+    @DeleteMapping("/espacios/eliminar")
+    public ResponseEntity<List<EspacioDTO>> eliminarEspacios(@RequestBody EliminarEspaciosRequest request) {
+        return ResponseEntity.ok(parqueaderoService.eliminarEspacios(request));
+    }
 }
