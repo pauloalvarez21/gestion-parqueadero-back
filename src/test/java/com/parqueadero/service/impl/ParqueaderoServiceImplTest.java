@@ -460,4 +460,37 @@ class ParqueaderoServiceImplTest {
         // Assert
         assertEquals(0, new BigDecimal("1500.00").compareTo(resultado.getValorTotal()));
     }
+
+    @Test
+    void eliminarTarifa_cuandoExiste_deberiaEliminarla() {
+        // Arrange
+        String tipoStr = "POR_MINUTO";
+        Tarifa tarifa = new Tarifa(1L, TipoTarifa.POR_MINUTO, new BigDecimal("50"));
+        when(tarifaRepository.findByTipoTarifa(TipoTarifa.POR_MINUTO)).thenReturn(Optional.of(tarifa));
+
+        // Act
+        parqueaderoService.eliminarTarifa(tipoStr);
+
+        // Assert
+        verify(tarifaRepository, times(1)).delete(tarifa);
+    }
+
+    @Test
+    void eliminarTarifa_cuandoTipoInvalido_deberiaLanzarExcepcion() {
+        // Arrange
+        String tipoStr = "INVALIDO";
+
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class, () -> parqueaderoService.eliminarTarifa(tipoStr));
+    }
+
+    @Test
+    void eliminarTarifa_cuandoNoExiste_deberiaLanzarExcepcion() {
+        // Arrange
+        String tipoStr = "POR_MINUTO";
+        when(tarifaRepository.findByTipoTarifa(TipoTarifa.POR_MINUTO)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThrows(ConfiguracionException.class, () -> parqueaderoService.eliminarTarifa(tipoStr));
+    }
 }

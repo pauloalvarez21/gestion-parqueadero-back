@@ -47,8 +47,8 @@ components:
           enum: [CARRO, MOTO, BICICLETA]
         tipoTarifa:
           type: string
-          enum: [POR_MINUTO, POR_HORA, POR_DIA, POR_MES]
-    
+          enum: [POR_MINUTO, POR_HORA, POR_DIA, POR_MES, FRACCION]
+
     SalidaRequest:
       type: object
       properties:
@@ -68,9 +68,9 @@ components:
         codigo:
           type: string
         vehiculo:
-          $ref: '#/components/schemas/VehiculoDTO'
+          $ref: "#/components/schemas/VehiculoDTO"
         espacio:
-          $ref: '#/components/schemas/EspacioDTO'
+          $ref: "#/components/schemas/EspacioDTO"
         horaEntrada:
           type: string
           format: date-time
@@ -220,7 +220,7 @@ components:
           format: int64
         tipoTarifa:
           type: string
-          enum: [POR_MINUTO, POR_HORA, POR_DIA, POR_MES]
+          enum: [POR_MINUTO, POR_HORA, POR_DIA, POR_MES, FRACCION]
         valor:
           type: number
 
@@ -238,15 +238,15 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RegisterRequest'
+              $ref: "#/components/schemas/RegisterRequest"
       responses:
-        '200':
+        "200":
           description: Usuario registrado exitosamente
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthResponse'
-        '409':
+                $ref: "#/components/schemas/AuthResponse"
+        "409":
           description: El usuario ya existe
 
   /api/auth/login:
@@ -258,14 +258,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LoginRequest'
+              $ref: "#/components/schemas/LoginRequest"
       responses:
-        '200':
+        "200":
           description: Login exitoso
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthResponse'
+                $ref: "#/components/schemas/AuthResponse"
 
   # --- Parqueadero Controller ---
   /api/parqueadero/entrada:
@@ -276,14 +276,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EntradaRequest'
+              $ref: "#/components/schemas/EntradaRequest"
       responses:
-        '200':
+        "200":
           description: Entrada registrada
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TicketDTO'
+                $ref: "#/components/schemas/TicketDTO"
 
   /api/parqueadero/salida:
     post:
@@ -293,14 +293,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SalidaRequest'
+              $ref: "#/components/schemas/SalidaRequest"
       responses:
-        '200':
+        "200":
           description: Salida registrada y pago calculado
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PagoResponse'
+                $ref: "#/components/schemas/PagoResponse"
 
   /api/parqueadero/tickets/{codigo}:
     get:
@@ -312,62 +312,81 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Detalle del ticket
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TicketDTO'
+                $ref: "#/components/schemas/TicketDTO"
 
   /api/parqueadero/tickets/activos:
     get:
       summary: Listar tickets activos
       responses:
-        '200':
+        "200":
           description: Lista de tickets activos
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/TicketDTO'
+                  $ref: "#/components/schemas/TicketDTO"
 
   /api/parqueadero/tarifas:
     get:
       summary: Listar tarifas globales (DTO)
       responses:
-        '200':
+        "200":
           description: Lista de tarifas globales
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/TarifaDTO'
+                  $ref: "#/components/schemas/TarifaDTO"
+
+  /api/parqueadero/tarifas/{tipoTarifa}:
+    delete:
+      summary: Elimina una tarifa global (Admin)
+      parameters:
+        - name: tipoTarifa
+          in: path
+          required: true
+          description: El tipo de tarifa a eliminar (ej. POR_MINUTO)
+          schema:
+            type: string
+            enum: [POR_MINUTO, POR_HORA, POR_DIA, POR_MES, FRACCION]
+      responses:
+        "204":
+          description: Tarifa eliminada exitosamente
+        "400":
+          description: Tipo de tarifa inválido
+        "404":
+          description: Tarifa no encontrada
 
   /api/parqueadero/espacios:
     get:
       summary: Listar todos los espacios
       responses:
-        '200':
+        "200":
           description: Lista de espacios
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/EspacioDTO'
+                  $ref: "#/components/schemas/EspacioDTO"
 
   /api/parqueadero/estadisticas:
     get:
       summary: Obtener estadísticas del parqueadero
       responses:
-        '200':
+        "200":
           description: Estadísticas actuales
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EstadisticasDTO'
+                $ref: "#/components/schemas/EstadisticasDTO"
 
   /api/parqueadero/espacios/agregar:
     post:
@@ -377,16 +396,16 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AgregarEspaciosRequest'
+              $ref: "#/components/schemas/AgregarEspaciosRequest"
       responses:
-        '200':
+        "200":
           description: Espacios creados
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/EspacioDTO'
+                  $ref: "#/components/schemas/EspacioDTO"
 
   /api/parqueadero/espacios/eliminar:
     delete:
@@ -396,16 +415,16 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EliminarEspaciosRequest'
+              $ref: "#/components/schemas/EliminarEspaciosRequest"
       responses:
-        '200':
+        "200":
           description: Espacios eliminados
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/EspacioDTO'
+                  $ref: "#/components/schemas/EspacioDTO"
 
   # --- Vehiculo Controller ---
   /api/vehiculos:
@@ -418,14 +437,14 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Lista de vehículos
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/VehiculoDTO'
+                  $ref: "#/components/schemas/VehiculoDTO"
     post:
       summary: Registrar nuevo vehículo
       requestBody:
@@ -433,14 +452,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/VehiculoDTO'
+              $ref: "#/components/schemas/VehiculoDTO"
       responses:
-        '201':
+        "201":
           description: Vehículo creado
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/VehiculoDTO'
+                $ref: "#/components/schemas/VehiculoDTO"
 
   /api/vehiculos/{placa}:
     get:
@@ -452,12 +471,12 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Detalle del vehículo
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/VehiculoDTO'
+                $ref: "#/components/schemas/VehiculoDTO"
 
   /api/vehiculos/{id}:
     put:
@@ -474,28 +493,28 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/VehiculoDTO'
+              $ref: "#/components/schemas/VehiculoDTO"
       responses:
-        '200':
+        "200":
           description: Vehículo actualizado
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/VehiculoDTO'
+                $ref: "#/components/schemas/VehiculoDTO"
 
   # --- Tarifa Controller ---
   /api/tarifas:
     get:
       summary: Listar todas las tarifas (Entidad completa)
       responses:
-        '200':
+        "200":
           description: Lista de tarifas
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Tarifa'
+                  $ref: "#/components/schemas/Tarifa"
     post:
       summary: Guardar o actualizar tarifa
       requestBody:
@@ -503,11 +522,11 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Tarifa'
+              $ref: "#/components/schemas/Tarifa"
       responses:
-        '200':
+        "200":
           description: Tarifa guardada
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Tarifa'
+                $ref: "#/components/schemas/Tarifa"

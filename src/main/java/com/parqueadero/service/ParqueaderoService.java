@@ -14,4 +14,5 @@ public interface ParqueaderoService {
     List<EspacioDTO> eliminarEspacios(EliminarEspaciosRequest request);
     List<TarifaDTO> listarTarifas();
     EstadisticasDTO obtenerEstadisticas();
+    void eliminarTarifa(String tipoTarifa);
 }

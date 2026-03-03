@@ -48,6 +48,10 @@ public class ParqueaderoServiceImpl implements ParqueaderoService {
         // Determinar tipo de vehículo
         TipoVehiculo tipoVehiculo = TipoVehiculo.valueOf(request.getTipoVehiculo().toUpperCase());
         
+        // Validar que la tarifa exista antes de dejar entrar al vehículo
+        TipoTarifa tipoTarifa = TipoTarifa.valueOf(request.getTipoTarifa().toUpperCase());
+        validarConfiguracionTarifa(tipoTarifa);
+
         // Buscar espacio disponible
         Espacio espacio = espacioRepository.findFirstByTipoVehiculoPermitidoAndEstadoOrderByIdAsc(tipoVehiculo, EstadoEspacio.DISPONIBLE)
             .orElseThrow(() -> new NoHayEspaciosDisponiblesException("No hay espacios disponibles para tipo: " + tipoVehiculo));
@@ -60,7 +64,7 @@ public class ParqueaderoServiceImpl implements ParqueaderoService {
             .vehiculo(vehiculo)
             .espacio(espacio)
             .horaEntrada(LocalDateTime.now())
-            .tipoTarifa(TipoTarifa.valueOf(request.getTipoTarifa().toUpperCase()))
+            .tipoTarifa(tipoTarifa)
             .estado(EstadoTicket.ACTIVO)
             .build();
         
@@ -377,5 +381,31 @@ public class ParqueaderoServiceImpl implements ParqueaderoService {
         espacioRepository.deleteAll(aEliminar);
         
         return aEliminar.stream().map(mapper::toEspacioDTO).collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public void eliminarTarifa(String tipoTarifaStr) {
+        TipoTarifa tipo;
+        try {
+            tipo = TipoTarifa.valueOf(tipoTarifaStr.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Tipo de tarifa inválido: " + tipoTarifaStr);
+        }
+
+        Tarifa tarifa = tarifaRepository.findByTipoTarifa(tipo)
+                .orElseThrow(() -> new ConfiguracionException("No existe tarifa configurada para " + tipo));
+        
+        tarifaRepository.delete(tarifa);
+        log.info("Tarifa global eliminada: {}", tipo);
+    }
+
+    private void validarConfiguracionTarifa(TipoTarifa tipo) {
+        // Las tarifas globales (que no dependen del espacio) deben existir en la BD
+        if (tipo == TipoTarifa.POR_MINUTO || tipo == TipoTarifa.POR_DIA || tipo == TipoTarifa.POR_MES) {
+            if (tarifaRepository.findByTipoTarifa(tipo).isEmpty()) {
+                throw new ConfiguracionException("No existe tarifa configurada para " + tipo + ". No se puede registrar la entrada.");
+            }
+        }
     }
 }
