@@ -39,6 +39,7 @@ public class ParqueaderoServiceImpl implements ParqueaderoService {
         
         // Validar si ya existe un ticket activo para esta placa
         ticketRepository.findTicketActivoByPlaca(request.getPlaca().toUpperCase())
+            .filter(t -> t.getEstado() == EstadoTicket.ACTIVO)
             .ifPresent(t -> { throw new VehiculoYaEstacionadoException("El vehículo ya tiene un ticket activo: " + t.getCodigo()); });
         
         // Buscar o crear vehículo

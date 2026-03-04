@@ -31,7 +31,7 @@ public class Ticket {
     @JoinColumn(name = "vehiculo_id", nullable = false)
     private Vehiculo vehiculo;
     
-    @OneToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "espacio_id", nullable = false)
     private Espacio espacio;
     

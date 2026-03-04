@@ -35,7 +35,4 @@ public class Espacio {
     
     @Column(precision = 10, scale = 2)
     private BigDecimal tarifaBase;
-    
-    @OneToOne(mappedBy = "espacio", fetch = FetchType.LAZY)
-    private Ticket ticketActivo;
 }
