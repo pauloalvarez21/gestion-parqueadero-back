@@ -2,6 +2,7 @@ package com.parqueadero.config;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
+import org.springframework.http.HttpMethod;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -29,14 +30,32 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable) // 1. Desactiva CSRF (Soluciona el 403 en POST)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource())) // 2. Habilita y configura CORS
-                .authorizeHttpRequests(auth -> auth
+                .authorizeHttpRequests(authorize -> authorize
+                        // 1. Endpoints públicos (autenticación y documentación)
                         .requestMatchers(
-                                "/api/auth/**",     // Endpoints de autenticación (login, registro)
-                                "/v3/api-docs/**",  // Documentación OpenAPI v3
-                                "/swagger-ui/**",   // UI de Swagger
+                                "/api/auth/**",
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
                                 "/swagger-ui.html"
                         ).permitAll()
-                        .anyRequest().authenticated() // 3. El resto de peticiones requieren autenticación
+
+                        // 2. Endpoints de Administración (solo ADMIN)
+                        .requestMatchers(
+                                "/api/parqueadero/estadisticas",
+                                "/api/usuarios/**" // Gestión completa de usuarios
+                        ).hasAuthority("ADMIN")
+                        // Endpoints específicos de ADMIN para gestionar el parqueadero
+                        .requestMatchers(HttpMethod.POST, "/api/parqueadero/espacios/agregar", "/api/parqueadero/tarifas").hasAuthority("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/parqueadero/tarifas/**").hasAuthority("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/parqueadero/espacios/eliminar", "/api/parqueadero/tarifas/**").hasAuthority("ADMIN")
+
+                        // 3. Endpoints Operativos (ADMIN y OPERADOR)
+                        // Corregido: los paths del controlador son /entrada y /salida
+                        .requestMatchers("/api/parqueadero/entrada", "/api/parqueadero/salida").hasAnyAuthority("ADMIN", "OPERADOR")
+                        .requestMatchers(HttpMethod.GET, "/api/parqueadero/**").hasAnyAuthority("ADMIN", "OPERADOR")
+
+                        // 4. Cualquier otra petición requiere autenticación
+                        .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider)

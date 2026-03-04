@@ -14,12 +14,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 @Component
+@Order(1) // Se ejecuta primero para asegurar la estructura base
 @RequiredArgsConstructor
 @Slf4j
 public class DataInitializer implements CommandLineRunner {
@@ -46,22 +50,24 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        log.info("Inicializando tarifas por defecto...");
-        crearTarifaSiNoExiste(TipoTarifa.POR_MINUTO, new BigDecimal("50.00"));
-        crearTarifaSiNoExiste(TipoTarifa.POR_DIA, new BigDecimal("15000.00"));
-        crearTarifaSiNoExiste(TipoTarifa.POR_MES, new BigDecimal("200000.00"));
-        log.info("Tarifas inicializadas correctamente.");
-
-        log.info("Verificando usuario administrador...");
+        log.info("--- INICIALIZADOR DE DATOS ESENCIALES ---");
+        crearTarifasGlobalesSiNoExisten();
         crearAdminSiNoExiste();
-
-        log.info("Verificando espacios de parqueadero...");
         crearEspaciosSiNoExisten();
+        log.info("--- INICIALIZACIÓN DE DATOS ESENCIALES COMPLETADA ---");
     }
 
-    private void crearTarifaSiNoExiste(TipoTarifa tipo, BigDecimal valor) {
-        tarifaRepository.findByTipoTarifa(tipo).orElseGet(() ->
-            tarifaRepository.save(Tarifa.builder().tipoTarifa(tipo).valor(valor).build()));
+    private void crearTarifasGlobalesSiNoExisten() {
+        if (tarifaRepository.count() == 0) {
+            log.info("Creando tarifas globales por defecto...");
+            List<Tarifa> tarifas = List.of(
+                    Tarifa.builder().tipoTarifa(TipoTarifa.POR_MINUTO).valor(new BigDecimal("50.00")).build(),
+                    Tarifa.builder().tipoTarifa(TipoTarifa.POR_DIA).valor(new BigDecimal("15000.00")).build(),
+                    Tarifa.builder().tipoTarifa(TipoTarifa.POR_MES).valor(new BigDecimal("200000.00")).build()
+            );
+            tarifaRepository.saveAll(tarifas);
+            log.info("Tarifas globales creadas.");
+        }
     }
 
     private void crearAdminSiNoExiste() {
@@ -73,13 +79,14 @@ public class DataInitializer implements CommandLineRunner {
                     .role(Role.ADMIN)
                     .build();
             usuarioRepository.save(admin);
-            log.info("Usuario administrador creado exitosamente.");
+            log.info("Usuario administrador '{}' creado con contraseña '{}'.", adminUsername, adminPassword);
         }
     }
 
     private void crearEspaciosSiNoExisten() {
         if (espacioRepository.count() == 0) {
-            log.info("Creando espacios iniciales...");
+            log.info("Creando espacios iniciales de parqueadero...");
+            List<Espacio> nuevosEspacios = new ArrayList<>();
             
             // Crear espacios para CARRO
             for (int i = 1; i <= cuposCarro; i++) {
@@ -88,7 +95,7 @@ public class DataInitializer implements CommandLineRunner {
                 espacio.setTipoVehiculoPermitido(TipoVehiculo.CARRO);
                 espacio.setEstado(EstadoEspacio.DISPONIBLE);
                 espacio.setTarifaBase(new BigDecimal("3000.00"));
-                espacioRepository.save(espacio);
+                nuevosEspacios.add(espacio);
             }
 
             // Crear espacios para MOTO
@@ -98,7 +105,7 @@ public class DataInitializer implements CommandLineRunner {
                 espacio.setTipoVehiculoPermitido(TipoVehiculo.MOTO);
                 espacio.setEstado(EstadoEspacio.DISPONIBLE);
                 espacio.setTarifaBase(new BigDecimal("1000.00"));
-                espacioRepository.save(espacio);
+                nuevosEspacios.add(espacio);
             }
 
             // Crear espacios para BICICLETA
@@ -108,9 +115,13 @@ public class DataInitializer implements CommandLineRunner {
                 espacio.setTipoVehiculoPermitido(TipoVehiculo.BICICLETA);
                 espacio.setEstado(EstadoEspacio.DISPONIBLE);
                 espacio.setTarifaBase(new BigDecimal("500.00"));
-                espacioRepository.save(espacio);
+                nuevosEspacios.add(espacio);
             }
-            log.info("Espacios creados exitosamente.");
+            
+            if (!nuevosEspacios.isEmpty()) {
+                espacioRepository.saveAll(nuevosEspacios);
+                log.info("{} espacios creados exitosamente ({} Carro, {} Moto, {} Bicicleta).", nuevosEspacios.size(), cuposCarro, cuposMoto, cuposBicicleta);
+            }
         }
     }
 }

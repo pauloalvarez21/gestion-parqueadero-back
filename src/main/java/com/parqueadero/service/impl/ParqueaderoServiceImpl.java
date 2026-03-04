@@ -360,17 +360,22 @@ public class ParqueaderoServiceImpl implements ParqueaderoService {
             throw new IllegalArgumentException("La cantidad debe ser mayor a 0");
         }
 
-        // Buscar espacios disponibles del tipo solicitado y ordenarlos descendentemente por su secuencia numérica
-        List<Espacio> espaciosCandidatos = espacioRepository.findByEstado(EstadoEspacio.DISPONIBLE).stream()
-                .filter(e -> e.getTipoVehiculoPermitido() == tipo)
+        // Buscar espacios disponibles del tipo solicitado (de forma eficiente) y ordenarlos descendentemente por su secuencia numérica
+        List<Espacio> espaciosCandidatos = espacioRepository.findByEstadoAndTipoVehiculoPermitido(EstadoEspacio.DISPONIBLE, tipo).stream()
                 .sorted((e1, e2) -> {
+                    int id1 = 0;
+                    int id2 = 0;
                     try {
-                        int id1 = Integer.parseInt(e1.getCodigo().split("-")[1]);
-                        int id2 = Integer.parseInt(e2.getCodigo().split("-")[1]);
-                        return Integer.compare(id2, id1); // Descendente para eliminar los últimos creados
-                    } catch (Exception ex) {
-                        return 0;
+                        id1 = Integer.parseInt(e1.getCodigo().split("-")[1]);
+                    } catch (NumberFormatException | ArrayIndexOutOfBoundsException ex) {
+                        log.warn("Código de espacio mal formado, no se puede parsear para ordenar: {}", e1.getCodigo());
                     }
+                    try {
+                        id2 = Integer.parseInt(e2.getCodigo().split("-")[1]);
+                    } catch (NumberFormatException | ArrayIndexOutOfBoundsException ex) {
+                        log.warn("Código de espacio mal formado, no se puede parsear para ordenar: {}", e2.getCodigo());
+                    }
+                    return Integer.compare(id2, id1); // Descendente para eliminar los últimos creados
                 })
                 .collect(Collectors.toList());
 

@@ -7,6 +7,7 @@ import com.parqueadero.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -20,6 +21,7 @@ import java.util.UUID;
 
 @Component
 @Profile("dev") // IMPORTANTE: Solo corre en entorno de desarrollo
+@Order(2) // Se ejecuta después de DataInitializer
 @RequiredArgsConstructor
 @Slf4j
 public class DataSeeder implements CommandLineRunner {
@@ -35,22 +37,18 @@ public class DataSeeder implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) throws Exception {
-        // Verificamos si ya hay tickets para no duplicar la data de prueba
-        if (ticketRepository.count() > 0) {
-            log.info("Ya existen tickets en la base de datos. Omitiendo DataSeeder de desarrollo.");
+        // Verificamos si ya hay datos de prueba para no duplicarlos
+        if (usuarioRepository.findByUsername("operador").isPresent()) {
+            log.info("El usuario 'operador' ya existe. Omitiendo DataSeeder de desarrollo.");
             return;
         }
 
         log.info("Iniciando carga de datos de prueba para DEV...");
 
-        // 1. Asegurar usuario 'user' (admin ya lo crea DataInitializer)
-        crearUsuarioUser();
+        // 1. Asegurar usuario de prueba 'operador' (admin lo crea DataInitializer)
+        crearUsuarioOperador();
 
-        // 2. Asegurar Tarifas (por si no existen)
-        crearTarifasSiNoExisten();
-
-        // 3. Obtener Espacios existentes (creados por DataInitializer: C-1, M-1...)
-        // Nota: DataInitializer usa formato "C-1", no "C-01"
+        // 3. Obtener Espacios existentes (creados por DataInitializer)
         List<Espacio> todosEspacios = espacioRepository.findAll();
         
         List<Espacio> espaciosCarro = todosEspacios.stream()
@@ -61,16 +59,9 @@ public class DataSeeder implements CommandLineRunner {
                 .filter(e -> e.getTipoVehiculoPermitido() == TipoVehiculo.MOTO)
                 .toList();
 
-        if (espaciosCarro.isEmpty()) {
-            log.info("No se encontraron espacios de CARRO. Creando 10 espacios...");
-            espaciosCarro = crearEspacios(TipoVehiculo.CARRO, 10, new BigDecimal("3000"));
-        }
-        if (espaciosMoto.isEmpty()) {
-            log.info("No se encontraron espacios de MOTO. Creando 10 espacios...");
-            espaciosMoto = crearEspacios(TipoVehiculo.MOTO, 10, new BigDecimal("1000"));
-        }
-
         // 4. Crear Escenarios de Tickets
+        // Se asume que DataInitializer ya creó espacios, por lo que las listas no estarán vacías.
+        // Si lo estuvieran, se lanzará una excepción, lo cual es correcto en este contexto.
         
         // Escenario A: Carro que entró hace 2.5 horas (Debe cobrar 3 horas)
         crearTicketActivo(
@@ -96,40 +87,16 @@ public class DataSeeder implements CommandLineRunner {
         log.info("¡Datos de prueba cargados exitosamente!");
     }
 
-    private void crearUsuarioUser() {
-        if (usuarioRepository.findByUsername("user").isEmpty()) {
-            Usuario user = Usuario.builder()
-                    .username("user")
-                    .password(passwordEncoder.encode("user123"))
-                    .role(Role.USER)
+    private void crearUsuarioOperador() {
+        if (usuarioRepository.findByUsername("operador").isEmpty()) {
+            Usuario operador = Usuario.builder()
+                    .username("operador")
+                    .password(passwordEncoder.encode("operador123"))
+                    .role(Role.OPERADOR)
                     .build();
-            usuarioRepository.save(user);
+            usuarioRepository.save(operador);
+            log.info("Usuario 'operador' de prueba creado.");
         }
-    }
-
-    private void crearTarifasSiNoExisten() {
-        if (tarifaRepository.count() == 0) {
-            List<Tarifa> tarifas = new ArrayList<>();
-            tarifas.add(new Tarifa(null, TipoTarifa.POR_MINUTO, new BigDecimal("50")));
-            tarifas.add(new Tarifa(null, TipoTarifa.POR_DIA, new BigDecimal("30000")));
-            tarifas.add(new Tarifa(null, TipoTarifa.POR_MES, new BigDecimal("150000")));
-            tarifaRepository.saveAll(tarifas);
-        }
-    }
-
-    private List<Espacio> crearEspacios(TipoVehiculo tipo, int cantidad, BigDecimal tarifaBase) {
-        List<Espacio> espacios = new ArrayList<>();
-        String prefijo = tipo == TipoVehiculo.CARRO ? "C-" : "M-";
-        
-        for (int i = 1; i <= cantidad; i++) {
-            Espacio e = new Espacio();
-            e.setCodigo(prefijo + i); 
-            e.setTipoVehiculoPermitido(tipo);
-            e.setEstado(EstadoEspacio.DISPONIBLE);
-            e.setTarifaBase(tarifaBase);
-            espacios.add(e);
-        }
-        return espacioRepository.saveAll(espacios);
     }
 
     private void crearTicketActivo(String placa, TipoVehiculo tipo, Espacio espacio, LocalDateTime entrada, TipoTarifa tarifa) {
