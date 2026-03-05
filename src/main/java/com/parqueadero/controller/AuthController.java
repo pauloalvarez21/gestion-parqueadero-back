@@ -40,12 +40,13 @@ public class AuthController {
         var user = Usuario.builder()
                 .username(request.getUsername())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .role(Role.USER)
+                // Si el rol viene en el request, lo usamos; si no, por defecto es USER.
+                .role(request.getRole() == null ? Role.USER : request.getRole())
                 .build();
         
         usuarioRepository.save(user);
         var jwtToken = jwtService.generateToken(user);
-        return ResponseEntity.ok(AuthResponse.builder().token(jwtToken).build());
+        return ResponseEntity.ok(AuthResponse.builder().token(jwtToken).role(user.getRole()).build());
     }
 
     @PostMapping("/login")
@@ -55,7 +56,7 @@ public class AuthController {
         );
         var user = usuarioRepository.findByUsername(request.getUsername()).orElseThrow();
         var jwtToken = jwtService.generateToken(user);
-        return ResponseEntity.ok(AuthResponse.builder().token(jwtToken).build());
+        return ResponseEntity.ok(AuthResponse.builder().token(jwtToken).role(user.getRole()).build());
     }
 
     @DeleteMapping("/eliminar/{username}")

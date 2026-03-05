@@ -56,6 +56,12 @@ public class ParqueaderoController {
         return ResponseEntity.ok(parqueaderoService.listarTarifas());
     }
 
+    @Operation(summary = "Crea o actualiza una tarifa global (Admin)")
+    @PostMapping("/tarifas")
+    public ResponseEntity<TarifaDTO> guardarTarifa(@RequestBody TarifaDTO request) {
+        return ResponseEntity.ok(parqueaderoService.guardarTarifa(request));
+    }
+
     @GetMapping("/espacios")
     public ResponseEntity<List<EspacioDTO>> listarEspacios() {
         return ResponseEntity.ok(parqueaderoService.listarEspacios());

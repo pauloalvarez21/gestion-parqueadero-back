@@ -17,6 +17,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -49,6 +50,7 @@ public class DataInitializer implements CommandLineRunner {
     private int cuposBicicleta;
 
     @Override
+    @Transactional
     public void run(String... args) throws Exception {
         log.info("--- INICIALIZADOR DE DATOS ESENCIALES ---");
         crearTarifasGlobalesSiNoExisten();

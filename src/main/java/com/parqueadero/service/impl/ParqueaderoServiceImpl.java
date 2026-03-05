@@ -391,6 +391,28 @@ public class ParqueaderoServiceImpl implements ParqueaderoService {
 
     @Override
     @Transactional
+    public TarifaDTO guardarTarifa(TarifaDTO request) {
+        TipoTarifa tipo;
+        try {
+            tipo = TipoTarifa.valueOf(request.getTipoTarifa());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Tipo de tarifa inválido: " + request.getTipoTarifa());
+        }
+
+        Tarifa tarifa = tarifaRepository.findByTipoTarifa(tipo)
+                .orElse(Tarifa.builder().tipoTarifa(tipo).build());
+        
+        tarifa.setValor(request.getValor());
+        tarifaRepository.save(tarifa);
+        
+        return TarifaDTO.builder()
+                .tipoTarifa(tarifa.getTipoTarifa().name())
+                .valor(tarifa.getValor())
+                .build();
+    }
+
+    @Override
+    @Transactional
     public void eliminarTarifa(String tipoTarifaStr) {
         TipoTarifa tipo;
         try {
@@ -407,11 +429,14 @@ public class ParqueaderoServiceImpl implements ParqueaderoService {
     }
 
     private void validarConfiguracionTarifa(TipoTarifa tipo) {
-        // Las tarifas globales (que no dependen del espacio) deben existir en la BD
-        if (tipo == TipoTarifa.POR_MINUTO || tipo == TipoTarifa.POR_DIA || tipo == TipoTarifa.POR_MES) {
-            if (tarifaRepository.findByTipoTarifa(tipo).isEmpty()) {
-                throw new ConfiguracionException("No existe tarifa configurada para " + tipo + ". No se puede registrar la entrada.");
-            }
+        // Las tarifas POR_HORA y FRACCION dependen de la tarifaBase del Espacio, no de la tabla global.
+        if (tipo == TipoTarifa.POR_HORA || tipo == TipoTarifa.FRACCION) {
+            return;
+        }
+
+        // Para tarifas globales (POR_MINUTO, POR_DIA, POR_MES), verificamos que existan en la BD
+        if (tarifaRepository.findByTipoTarifa(tipo).isEmpty()) {
+            throw new ConfiguracionException("No existe tarifa configurada para el tipo: " + tipo);
         }
     }
 }

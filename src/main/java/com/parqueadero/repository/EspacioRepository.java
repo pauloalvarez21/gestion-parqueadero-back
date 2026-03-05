@@ -14,8 +14,8 @@ public interface EspacioRepository extends JpaRepository<Espacio, Long> {
 
     // Este método bloquea la fila seleccionada hasta que la transacción termine, evitando race conditions.
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    Optional<Espacio> findFirstByTipoVehiculoPermitidoAndEstadoOrderByIdAsc(TipoVehiculo tipoVehiculo, EstadoEspacio estado);
-
+    Optional<Espacio> findFirstByTipoVehiculoPermitidoAndEstadoOrderByIdAsc(TipoVehiculo tipo, EstadoEspacio estado);
+    List<Espacio> findByEstadoAndTipoVehiculoPermitido(EstadoEspacio estado, TipoVehiculo tipo);
     List<Espacio> findByEstado(EstadoEspacio estado);
     long countByEstado(EstadoEspacio estado);
 }

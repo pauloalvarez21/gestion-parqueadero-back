@@ -1,4 +1,5 @@
 package com.parqueadero.dto;
+import com.parqueadero.enums.Role;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -10,4 +11,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class AuthResponse {
     private String token;
+    private Role role;
 }

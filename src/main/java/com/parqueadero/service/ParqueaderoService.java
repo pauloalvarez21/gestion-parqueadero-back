@@ -8,11 +8,15 @@ public interface ParqueaderoService {
     PagoResponse registrarSalida(SalidaRequest request);
     TicketDTO obtenerTicket(String codigo);
     List<TicketDTO> listarTicketsActivos();
+    List<TarifaDTO> listarTarifas();
     List<EspacioDTO> listarEspacios();
     List<EspacioDTO> listarEspaciosDisponibles();
     List<EspacioDTO> agregarEspacios(AgregarEspaciosRequest request);
     List<EspacioDTO> eliminarEspacios(EliminarEspaciosRequest request);
-    List<TarifaDTO> listarTarifas();
-    EstadisticasDTO obtenerEstadisticas();
+
+    TarifaDTO guardarTarifa(TarifaDTO request);
+
     void eliminarTarifa(String tipoTarifa);
+
+    EstadisticasDTO obtenerEstadisticas();
 }

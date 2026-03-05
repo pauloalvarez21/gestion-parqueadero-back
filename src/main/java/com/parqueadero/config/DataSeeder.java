@@ -59,6 +59,11 @@ public class DataSeeder implements CommandLineRunner {
                 .filter(e -> e.getTipoVehiculoPermitido() == TipoVehiculo.MOTO)
                 .toList();
 
+        if (espaciosCarro.isEmpty() || espaciosMoto.isEmpty()) {
+            log.warn("No se encontraron espacios para CARRO o MOTO. Saltando la creación de tickets de prueba. Verifica que DataInitializer se haya ejecutado.");
+            return;
+        }
+
         // 4. Crear Escenarios de Tickets
         // Se asume que DataInitializer ya creó espacios, por lo que las listas no estarán vacías.
         // Si lo estuvieran, se lanzará una excepción, lo cual es correcto en este contexto.
