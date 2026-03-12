@@ -9,7 +9,7 @@ WORKDIR /app
 COPY target/gestion-parqueadero-0.0.1-SNAPSHOT.jar app.jar
 
 # Exponemos el puerto configurado en application.properties
-EXPOSE 8082
+EXPOSE 8080
 
 # Comando para ejecutar la aplicación
 ENTRYPOINT ["java", "-jar", "app.jar"]
