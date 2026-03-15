@@ -1,6 +1,6 @@
 #FileLock
-#Sun Mar 15 09:57:24 COT 2026
+#Sun Mar 15 14:10:51 COT 2026
 hostName=usuario
-id=19cf2007c93941a9ce1f8651c8cbe26d78f49b39431
+id=19cf2e886a78cf9892634170f42331111811f41856a
 method=file
-server=192.168.1.11\:38952
+server=192.168.1.11\:12595

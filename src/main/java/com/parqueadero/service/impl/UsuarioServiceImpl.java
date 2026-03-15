@@ -55,4 +55,12 @@ public class UsuarioServiceImpl implements UsuarioService {
                 .role(usuario.getRole().name())
                 .build();
     }
+
+    @Override
+    @Transactional
+    public void eliminarUsuario(String username) {
+        Usuario usuario = usuarioRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado con el username: " + username));
+        usuarioRepository.delete(usuario);
+    }
 }

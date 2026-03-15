@@ -13,8 +13,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -40,8 +38,9 @@ public class AuthController {
         var user = Usuario.builder()
                 .username(request.getUsername())
                 .password(passwordEncoder.encode(request.getPassword()))
-                // Si el rol viene en el request, lo usamos; si no, por defecto es USER.
-                .role(request.getRole() == null ? Role.USER : request.getRole())
+                // Por seguridad, el registro público siempre crea usuarios con rol USER.
+                // Los roles de OPERADOR o ADMIN los debe asignar un ADMIN existente.
+                .role(Role.USER)
                 .build();
         
         usuarioRepository.save(user);
@@ -57,15 +56,5 @@ public class AuthController {
         var user = usuarioRepository.findByUsername(request.getUsername()).orElseThrow();
         var jwtToken = jwtService.generateToken(user);
         return ResponseEntity.ok(AuthResponse.builder().token(jwtToken).role(user.getRole()).build());
-    }
-
-    @DeleteMapping("/eliminar/{username}")
-    public ResponseEntity<Void> eliminarUsuario(@PathVariable String username) {
-        var user = usuarioRepository.findByUsername(username);
-        if (user.isPresent()) {
-            usuarioRepository.delete(user.get());
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.notFound().build();
     }
 }

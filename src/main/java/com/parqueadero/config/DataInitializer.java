@@ -117,7 +117,7 @@ public class DataInitializer implements CommandLineRunner {
                     .role(Role.ADMIN)
                     .build();
             usuarioRepository.save(admin);
-            log.info("Usuario administrador '{}' creado con contraseña '{}'.", adminUsername, adminPassword);
+            log.info("Usuario administrador '{}' creado exitosamente.", adminUsername);
         }
     }
 

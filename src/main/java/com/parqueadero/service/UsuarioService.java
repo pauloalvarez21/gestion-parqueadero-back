@@ -9,4 +9,6 @@ public interface UsuarioService {
     List<UsuarioDTO> getAllUsers();
 
     UsuarioDTO cambiarRol(String username, CambiarRolRequestDTO request);
+
+    void eliminarUsuario(String username);
 }

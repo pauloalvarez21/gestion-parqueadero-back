@@ -28,12 +28,18 @@ services:
     ports:
       - "8080:8080"
     environment:
-      # Activamos el perfil 'pro' que creamos antes
-      SPRING_PROFILES_ACTIVE: pro
-      # Sobrescribimos la URL para que apunte al contenedor 'postgres-db' en lugar de localhost
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/parqueaderodb
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: postgres
+      - SPRING_PROFILES_ACTIVE=pro
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/parqueaderodb
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres # Cambiar por una clave segura en producción
+      
+      # SEGURIDAD: Define estas variables antes de arrancar en producción
+      - JWT_SECRET=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+      - ADMIN_USERNAME=admin
+      - ADMIN_PASSWORD=admin123
+      
+      # CORS: Agrega tu dominio real aquí cuando lo sepas (separado por comas)
+      - CORS_ORIGINS=http://localhost:4200
     depends_on:
       postgres-db:
         condition: service_healthy

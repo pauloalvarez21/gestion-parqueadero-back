@@ -25,6 +25,9 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final AuthenticationProvider authenticationProvider;
 
+    @org.springframework.beans.factory.annotation.Value("${cors.allowed-origins:http://localhost:4200}")
+    private List<String> allowedOrigins;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -49,12 +52,21 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/parqueadero/tarifas/**").hasAuthority("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/parqueadero/espacios/eliminar", "/api/parqueadero/tarifas/**").hasAuthority("ADMIN")
 
-                        // 3. Endpoints Operativos (ADMIN y OPERADOR)
+                        // 3. Endpoints de Tarifas directos (TarifaController)
+                        .requestMatchers(HttpMethod.POST, "/api/tarifas/**").hasAuthority("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/tarifas/**").hasAuthority("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/tarifas/**").hasAuthority("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/tarifas/**").hasAnyAuthority("ADMIN", "OPERADOR")
+
+                        // 4. Endpoints Operativos (ADMIN y OPERADOR)
                         // Corregido: los paths del controlador son /entrada y /salida
                         .requestMatchers("/api/parqueadero/entrada", "/api/parqueadero/salida").hasAnyAuthority("ADMIN", "OPERADOR")
                         .requestMatchers(HttpMethod.GET, "/api/parqueadero/**").hasAnyAuthority("ADMIN", "OPERADOR")
 
-                        // 4. Cualquier otra petición requiere autenticación
+                        // 5. Endpoints de Vehículos (ADMIN y OPERADOR)
+                        .requestMatchers("/api/vehiculos/**").hasAnyAuthority("ADMIN", "OPERADOR")
+
+                        // 6. Cualquier otra petición requiere autenticación
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -67,7 +79,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:4200")); // Origen del frontend
+        configuration.setAllowedOrigins(allowedOrigins); // Origen configurable
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         configuration.setAllowCredentials(true);

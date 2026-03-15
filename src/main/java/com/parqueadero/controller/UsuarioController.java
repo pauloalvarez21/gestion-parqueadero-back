@@ -34,4 +34,12 @@ public class UsuarioController {
         UsuarioDTO usuarioActualizado = usuarioService.cambiarRol(username, request);
         return ResponseEntity.ok(usuarioActualizado);
     }
+
+    @Operation(summary = "Elimina un usuario del sistema (Solo para Admin)",
+               description = "Elimina un usuario por su username. Requiere rol de ADMIN.")
+    @DeleteMapping("/{username}")
+    public ResponseEntity<Void> eliminarUsuario(@PathVariable String username) {
+        usuarioService.eliminarUsuario(username);
+        return ResponseEntity.noContent().build();
+    }
 }
