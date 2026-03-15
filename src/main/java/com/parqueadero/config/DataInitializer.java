@@ -5,6 +5,7 @@ import com.parqueadero.entity.Tarifa;
 import com.parqueadero.entity.Usuario;
 import com.parqueadero.enums.EstadoEspacio;
 import com.parqueadero.enums.Role;
+
 import com.parqueadero.enums.TipoTarifa;
 import com.parqueadero.enums.TipoVehiculo;
 import com.parqueadero.repository.EspacioRepository;
@@ -49,6 +50,9 @@ public class DataInitializer implements CommandLineRunner {
     @Value("${parqueadero.cupos.bicicleta:10}")
     private int cuposBicicleta;
 
+    @Value("${parqueadero.cupos.camion:5}")
+    private int cuposCamion;
+
     @Override
     @Transactional
     public void run(String... args) throws Exception {
@@ -60,15 +64,47 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void crearTarifasGlobalesSiNoExisten() {
-        if (tarifaRepository.count() == 0) {
-            log.info("Creando tarifas globales por defecto...");
-            List<Tarifa> tarifas = List.of(
-                    Tarifa.builder().tipoTarifa(TipoTarifa.POR_MINUTO).valor(new BigDecimal("50.00")).build(),
-                    Tarifa.builder().tipoTarifa(TipoTarifa.POR_DIA).valor(new BigDecimal("15000.00")).build(),
-                    Tarifa.builder().tipoTarifa(TipoTarifa.POR_MES).valor(new BigDecimal("200000.00")).build()
-            );
-            tarifaRepository.saveAll(tarifas);
-            log.info("Tarifas globales creadas.");
+        log.info("Verificando tarifas globales...");
+        
+        // Tarifas para CARRO
+        verificarYCrearTarifa(TipoVehiculo.CARRO, TipoTarifa.POR_MINUTO, new BigDecimal("50.00"));
+        verificarYCrearTarifa(TipoVehiculo.CARRO, TipoTarifa.POR_HORA, new BigDecimal("3000.00"));
+        verificarYCrearTarifa(TipoVehiculo.CARRO, TipoTarifa.POR_DIA, new BigDecimal("25000.00"));
+        verificarYCrearTarifa(TipoVehiculo.CARRO, TipoTarifa.POR_MES, new BigDecimal("150000.00"));
+        verificarYCrearTarifa(TipoVehiculo.CARRO, TipoTarifa.FRACCION, new BigDecimal("1000.00"));
+
+        // Tarifas para MOTO
+        verificarYCrearTarifa(TipoVehiculo.MOTO, TipoTarifa.POR_MINUTO, new BigDecimal("20.00"));
+        verificarYCrearTarifa(TipoVehiculo.MOTO, TipoTarifa.POR_HORA, new BigDecimal("1000.00"));
+        verificarYCrearTarifa(TipoVehiculo.MOTO, TipoTarifa.POR_DIA, new BigDecimal("8000.00"));
+        verificarYCrearTarifa(TipoVehiculo.MOTO, TipoTarifa.POR_MES, new BigDecimal("60000.00"));
+        verificarYCrearTarifa(TipoVehiculo.MOTO, TipoTarifa.FRACCION, new BigDecimal("500.00"));
+
+        // Tarifas para BICICLETA
+        verificarYCrearTarifa(TipoVehiculo.BICICLETA, TipoTarifa.POR_MINUTO, new BigDecimal("5.00"));
+        verificarYCrearTarifa(TipoVehiculo.BICICLETA, TipoTarifa.POR_HORA, new BigDecimal("500.00"));
+        verificarYCrearTarifa(TipoVehiculo.BICICLETA, TipoTarifa.POR_DIA, new BigDecimal("3000.00"));
+        verificarYCrearTarifa(TipoVehiculo.BICICLETA, TipoTarifa.POR_MES, new BigDecimal("20000.00"));
+        verificarYCrearTarifa(TipoVehiculo.BICICLETA, TipoTarifa.FRACCION, new BigDecimal("200.00"));
+
+        // Tarifas para CAMION
+        verificarYCrearTarifa(TipoVehiculo.CAMION, TipoTarifa.POR_MINUTO, new BigDecimal("100.00"));
+        verificarYCrearTarifa(TipoVehiculo.CAMION, TipoTarifa.POR_HORA, new BigDecimal("6000.00"));
+        verificarYCrearTarifa(TipoVehiculo.CAMION, TipoTarifa.POR_DIA, new BigDecimal("50000.00"));
+        verificarYCrearTarifa(TipoVehiculo.CAMION, TipoTarifa.POR_MES, new BigDecimal("300000.00"));
+        verificarYCrearTarifa(TipoVehiculo.CAMION, TipoTarifa.FRACCION, new BigDecimal("2000.00"));
+
+        log.info("Verificación de tarifas globales completada.");
+    }
+
+    private void verificarYCrearTarifa(TipoVehiculo vehiculo, TipoTarifa tipo, BigDecimal valor) {
+        if (tarifaRepository.findByTipoVehiculoAndTipoTarifa(vehiculo, tipo).isEmpty()) {
+            tarifaRepository.save(Tarifa.builder()
+                    .tipoVehiculo(vehiculo)
+                    .tipoTarifa(tipo)
+                    .valor(valor)
+                    .build());
+            log.info("Tarifa creada: {} - {} - {}", vehiculo, tipo, valor);
         }
     }
 
@@ -119,10 +155,21 @@ public class DataInitializer implements CommandLineRunner {
                 espacio.setTarifaBase(new BigDecimal("500.00"));
                 nuevosEspacios.add(espacio);
             }
+
+            // Crear espacios para CAMION
+            for (int i = 1; i <= cuposCamion; i++) {
+                Espacio espacio = new Espacio();
+                espacio.setCodigo("K-" + i); // K de Camión
+                espacio.setTipoVehiculoPermitido(TipoVehiculo.CAMION);
+                espacio.setEstado(EstadoEspacio.DISPONIBLE);
+                espacio.setTarifaBase(new BigDecimal("6000.00"));
+                nuevosEspacios.add(espacio);
+            }
             
             if (!nuevosEspacios.isEmpty()) {
                 espacioRepository.saveAll(nuevosEspacios);
-                log.info("{} espacios creados exitosamente ({} Carro, {} Moto, {} Bicicleta).", nuevosEspacios.size(), cuposCarro, cuposMoto, cuposBicicleta);
+                log.info("{} espacios creados exitosamente ({} Carro, {} Moto, {} Bicicleta, {} Camion).", 
+                    nuevosEspacios.size(), cuposCarro, cuposMoto, cuposBicicleta, cuposCamion);
             }
         }
     }

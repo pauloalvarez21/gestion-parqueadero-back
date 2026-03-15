@@ -85,9 +85,9 @@ public class ParqueaderoController {
     }
 
     @Operation(summary = "Elimina una tarifa global (Admin)")
-    @DeleteMapping("/tarifas/{tipoTarifa}")
-    public ResponseEntity<Void> eliminarTarifa(@PathVariable String tipoTarifa) {
-        parqueaderoService.eliminarTarifa(tipoTarifa);
+    @DeleteMapping("/tarifas/{tipoVehiculo}/{tipoTarifa}")
+    public ResponseEntity<Void> eliminarTarifa(@PathVariable String tipoVehiculo, @PathVariable String tipoTarifa) {
+        parqueaderoService.eliminarTarifa(tipoVehiculo, tipoTarifa);
         return ResponseEntity.noContent().build();
     }
 }

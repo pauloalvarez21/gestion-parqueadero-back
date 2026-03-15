@@ -2,7 +2,7 @@ package com.parqueadero.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.parqueadero.entity.Tarifa;
-import com.parqueadero.enums.TipoTarifa;
+import com.parqueadero.enums.TipoVehiculo;
 import com.parqueadero.repository.TarifaRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -47,7 +46,7 @@ class TarifaControllerTest {
     @BeforeEach
     void setUp() {
         tarifa = new Tarifa();
-        tarifa.setTipoTarifa(TipoTarifa.POR_MINUTO);
+        tarifa.setTipoVehiculo(TipoVehiculo.CARRO);
         tarifa.setValor(BigDecimal.valueOf(100.0));
     }
 
@@ -59,14 +58,14 @@ class TarifaControllerTest {
 
         mockMvc.perform(get("/api/tarifas"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].tipoTarifa").value("POR_MINUTO"));
+                .andExpect(jsonPath("$[0].tipoVehiculo").value("CARRO"));
     }
 
 
     @Test
     @WithMockUser(authorities = "ADMIN")
     void guardarOActualizar_cuandoAdmin_deberiaRetornar200() throws Exception {
-        when(tarifaRepository.findByTipoTarifa(any(TipoTarifa.class))).thenReturn(Optional.of(tarifa));
+        when(tarifaRepository.findByTipoVehiculo(any(TipoVehiculo.class))).thenReturn(Optional.of(tarifa));
         when(tarifaRepository.save(any(Tarifa.class))).thenReturn(tarifa);
 
 

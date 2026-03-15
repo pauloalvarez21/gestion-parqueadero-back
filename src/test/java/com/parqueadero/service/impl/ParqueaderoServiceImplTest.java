@@ -8,7 +8,7 @@ import com.parqueadero.entity.Ticket;
 import com.parqueadero.entity.Vehiculo;
 import com.parqueadero.enums.EstadoEspacio;
 import com.parqueadero.enums.EstadoTicket;
-import com.parqueadero.enums.TipoTarifa;
+
 import com.parqueadero.enums.TipoVehiculo;
 import com.parqueadero.exception.NoHayEspaciosDisponiblesException;
 import com.parqueadero.exception.VehiculoYaEstacionadoException;
@@ -57,7 +57,7 @@ class ParqueaderoServiceImplTest {
         entradaRequest = new EntradaRequest();
         entradaRequest.setPlaca("ABC-123");
         entradaRequest.setTipoVehiculo("CARRO");
-        entradaRequest.setTipoTarifa("POR_HORA");
+
 
         vehiculo = Vehiculo.builder().id(1L).placa("ABC-123").tipo(TipoVehiculo.CARRO).build();
         espacio = new Espacio();
@@ -123,7 +123,6 @@ class ParqueaderoServiceImplTest {
         salidaRequest.setCodigoTicket("TKT-TEST");
 
         LocalDateTime entrada = LocalDateTime.now().minusHours(2).minusMinutes(30); // 2.5 horas -> debe cobrar 3 horas
-        LocalDateTime salida = LocalDateTime.now();
 
         Ticket ticket = Ticket.builder()
                 .id(1L)
@@ -131,11 +130,13 @@ class ParqueaderoServiceImplTest {
                 .vehiculo(vehiculo)
                 .espacio(espacio)
                 .horaEntrada(entrada)
-                .tipoTarifa(TipoTarifa.POR_HORA)
                 .estado(EstadoTicket.ACTIVO)
                 .build();
 
         when(ticketRepository.findByCodigo("TKT-TEST")).thenReturn(Optional.of(ticket));
+        
+        com.parqueadero.entity.Tarifa tarifaMock = com.parqueadero.entity.Tarifa.builder().tipoVehiculo(TipoVehiculo.CARRO).valor(new BigDecimal("3000")).build();
+        when(tarifaRepository.findByTipoVehiculo(TipoVehiculo.CARRO)).thenReturn(Optional.of(tarifaMock));
 
         // Act
         PagoResponse pagoResponse = parqueaderoService.registrarSalida(salidaRequest);

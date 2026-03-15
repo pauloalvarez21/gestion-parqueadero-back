@@ -5,7 +5,7 @@ import com.parqueadero.entity.Ticket;
 import com.parqueadero.entity.Vehiculo;
 import com.parqueadero.enums.EstadoEspacio;
 import com.parqueadero.enums.EstadoTicket;
-import com.parqueadero.enums.TipoTarifa;
+
 import com.parqueadero.enums.TipoVehiculo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,7 +15,6 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -57,7 +56,6 @@ class TicketRepositoryTest {
                 .vehiculo(vehiculo)
                 .espacio(espacio)
                 .horaEntrada(LocalDateTime.now())
-                .tipoTarifa(TipoTarifa.POR_HORA)
                 .estado(EstadoTicket.ACTIVO)
                 .build();
         entityManager.persist(ticket);
@@ -76,7 +74,6 @@ class TicketRepositoryTest {
                 .vehiculo(vehiculo)
                 .espacio(espacio)
                 .horaEntrada(LocalDateTime.now())
-                .tipoTarifa(TipoTarifa.POR_HORA)
                 .estado(EstadoTicket.ACTIVO)
                 .build();
         entityManager.persist(ticket);
@@ -95,7 +92,6 @@ class TicketRepositoryTest {
                 .vehiculo(vehiculo)
                 .espacio(espacio)
                 .horaEntrada(LocalDateTime.now())
-                .tipoTarifa(TipoTarifa.POR_HORA)
                 .estado(EstadoTicket.ACTIVO)
                 .build();
         entityManager.persist(ticket);

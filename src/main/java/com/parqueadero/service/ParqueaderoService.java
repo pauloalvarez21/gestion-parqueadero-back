@@ -16,7 +16,7 @@ public interface ParqueaderoService {
 
     TarifaDTO guardarTarifa(TarifaDTO request);
 
-    void eliminarTarifa(String tipoTarifa);
+    void eliminarTarifa(String tipoVehiculo, String tipoTarifa);
 
     EstadisticasDTO obtenerEstadisticas();
 }

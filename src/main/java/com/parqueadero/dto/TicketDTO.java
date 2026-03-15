@@ -20,6 +20,7 @@ public class TicketDTO {
     private LocalDateTime horaEntrada;
     private LocalDateTime horaSalida;
     private String tipoTarifa;
+
     private BigDecimal valorBase;
     private BigDecimal valorAdicional;
     private BigDecimal descuento;

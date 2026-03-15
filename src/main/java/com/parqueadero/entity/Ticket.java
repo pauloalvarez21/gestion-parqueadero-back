@@ -2,6 +2,7 @@ package com.parqueadero.entity;
 
 import com.parqueadero.enums.EstadoTicket;
 import com.parqueadero.enums.TipoTarifa;
+
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -42,9 +43,10 @@ public class Ticket {
     private LocalDateTime horaSalida;
     
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "tipo_tarifa")
     private TipoTarifa tipoTarifa;
     
+
     @Column(name = "valor_base", precision = 10, scale = 2)
     private BigDecimal valorBase;
     

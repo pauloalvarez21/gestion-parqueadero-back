@@ -1,6 +1,7 @@
 package com.parqueadero.entity;
 
 import com.parqueadero.enums.TipoTarifa;
+import com.parqueadero.enums.TipoVehiculo;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -10,7 +11,9 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 
 @Entity
-@Table(name = "tarifas")
+@Table(name = "tarifas", uniqueConstraints = {
+    @UniqueConstraint(columnNames = {"tipo_vehiculo", "tipo_tarifa"})
+})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -22,7 +25,11 @@ public class Tarifa {
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    @Column(unique = true, nullable = false)
+    @Column(name = "tipo_vehiculo", nullable = false)
+    private TipoVehiculo tipoVehiculo;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tipo_tarifa", nullable = false)
     private TipoTarifa tipoTarifa;
 
     @Column(nullable = false)

@@ -48,10 +48,6 @@ public class ParqueaderoServiceImpl implements ParqueaderoService {
         
         // Determinar tipo de vehículo
         TipoVehiculo tipoVehiculo = TipoVehiculo.valueOf(request.getTipoVehiculo().toUpperCase());
-        
-        // Validar que la tarifa exista antes de dejar entrar al vehículo
-        TipoTarifa tipoTarifa = TipoTarifa.valueOf(request.getTipoTarifa().toUpperCase());
-        validarConfiguracionTarifa(tipoTarifa);
 
         // Buscar espacio disponible
         Espacio espacio = espacioRepository.findFirstByTipoVehiculoPermitidoAndEstadoOrderByIdAsc(tipoVehiculo, EstadoEspacio.DISPONIBLE)
@@ -59,6 +55,10 @@ public class ParqueaderoServiceImpl implements ParqueaderoService {
 
         espacio.setEstado(EstadoEspacio.OCUPADO);
         
+        // Determinar tipo de tarifa (por defecto POR_HORA)
+        TipoTarifa tipoTarifa = request.getTipoTarifa() != null ? 
+            TipoTarifa.valueOf(request.getTipoTarifa().toUpperCase()) : TipoTarifa.POR_HORA;
+
         // Crear ticket
         Ticket ticket = Ticket.builder()
             .codigo(generarCodigoTicket())
@@ -130,66 +130,48 @@ public class ParqueaderoServiceImpl implements ParqueaderoService {
         long minutosTotales = ChronoUnit.MINUTES.between(entrada, salida);
         long horas = minutosTotales / 60; // Horas completas, para el descuento
         
-        // Se obtiene la tarifa base del espacio, que se asume es la tarifa por hora.
-        // NOTA: La tarifa POR_HORA y FRACCION se basa en la 'tarifaBase' del Espacio,
-        // no en la tabla global de Tarifas. Esto permite flexibilidad (ej. tarifas distintas por tipo de espacio).
-        BigDecimal tarifaHora = ticket.getEspacio().getTarifaBase();
-        if (tarifaHora == null || tarifaHora.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new ConfiguracionException("La tarifa base para el espacio " + ticket.getEspacio().getCodigo() + " no está configurada correctamente.");
-        }
+        TipoTarifa tipoTarifa = ticket.getTipoTarifa() != null ? ticket.getTipoTarifa() : TipoTarifa.POR_HORA;
+        BigDecimal tarifaValor = obtenerTarifaGlobal(ticket.getVehiculo().getTipo(), tipoTarifa);
         
         BigDecimal valorBase = BigDecimal.ZERO;
         BigDecimal valorAdicional = BigDecimal.ZERO;
         
-        switch (ticket.getTipoTarifa()) {
+        switch (tipoTarifa) {
             case POR_MINUTO:
-                BigDecimal tarifaMinuto = obtenerTarifaGlobal(TipoTarifa.POR_MINUTO);
-                valorBase = tarifaMinuto.multiply(new BigDecimal(minutosTotales));
+                valorBase = tarifaValor.multiply(new BigDecimal(minutosTotales));
                 break;
             case POR_HORA:
-                // Si el tiempo es 0 o negativo, el costo es 0.
-                if (minutosTotales <= 0) {
-                    valorBase = BigDecimal.ZERO;
-                    break;
-                }
-                
-                // Se cobra siempre como mínimo una hora.
-                long horasACobrar = 1;
-                
-                // Si la estadía es mayor a una hora, se calculan las horas adicionales.
-                if (minutosTotales > 60) {
-                    long minutosDespuesDePrimeraHora = minutosTotales - 60;
-                    long horasAdicionales = minutosDespuesDePrimeraHora / 60;
-                    long minutosRestantesAdicionales = minutosDespuesDePrimeraHora % 60;
-                    
-                    horasACobrar += horasAdicionales;
-                    
-                    // Se aplica el período de gracia de 10 minutos para las horas siguientes.
-                    if (minutosRestantesAdicionales > 10) {
-                        horasACobrar++;
+                if (minutosTotales > 0) {
+                    long horasACobrar = 1;
+                    if (minutosTotales > 60) {
+                        long minutosDespuesDePrimeraHora = minutosTotales - 60;
+                        long horasAdicionales = minutosDespuesDePrimeraHora / 60;
+                        long minutosRestantesAdicionales = minutosDespuesDePrimeraHora % 60;
+                        horasACobrar += horasAdicionales;
+                        if (minutosRestantesAdicionales > 10) {
+                            horasACobrar++;
+                        }
                     }
+                    valorBase = tarifaValor.multiply(new BigDecimal(horasACobrar));
                 }
-                valorBase = tarifaHora.multiply(new BigDecimal(horasACobrar));
                 break;
             case POR_DIA:
-                BigDecimal tarifaDia = obtenerTarifaGlobal(TipoTarifa.POR_DIA);
-                long dias = ChronoUnit.DAYS.between(entrada.toLocalDate(), salida.toLocalDate()) + 1;
-                valorBase = tarifaDia.multiply(new BigDecimal(dias));
+                long dias = ChronoUnit.DAYS.between(entrada, salida);
+                if (duracionMinutosRestantes(entrada, salida, dias * 24 * 60) > 0) {
+                    dias++;
+                }
+                valorBase = tarifaValor.multiply(new BigDecimal(Math.max(1, dias)));
                 break;
             case POR_MES:
-                BigDecimal tarifaMes = obtenerTarifaGlobal(TipoTarifa.POR_MES);
-                valorBase = tarifaMes;
+                valorBase = tarifaValor; // Pago fijo mensual
                 break;
-            case FRACCION:
-                long fracciones = (minutosTotales / 15) + (minutosTotales % 15 > 0 ? 1 : 0);
-                BigDecimal tarifaFraccion = tarifaHora.divide(new BigDecimal("4"), 0, RoundingMode.CEILING);
-                valorBase = tarifaFraccion.multiply(new BigDecimal(fracciones));
-                break;
+            default:
+                valorBase = tarifaValor.multiply(new BigDecimal(horas + 1));
         }
         
-        // Descuento por tiempo largo (más de 8 horas)
+        // Descuento por tiempo largo (más de 8 horas) solo si es tarifa por hora
         BigDecimal descuento = BigDecimal.ZERO;
-        if (horas >= 8 && ticket.getTipoTarifa() == TipoTarifa.POR_HORA) {
+        if (tipoTarifa == TipoTarifa.POR_HORA && horas >= 8) {
             descuento = valorBase.multiply(new BigDecimal("0.10")); // 10% de descuento
         }
         
@@ -209,10 +191,14 @@ public class ParqueaderoServiceImpl implements ParqueaderoService {
             .build();
     }
 
-    private BigDecimal obtenerTarifaGlobal(TipoTarifa tipo) {
-        return tarifaRepository.findByTipoTarifa(tipo)
+    private long duracionMinutosRestantes(LocalDateTime inicio, LocalDateTime fin, long minutosYaContados) {
+        return ChronoUnit.MINUTES.between(inicio, fin) - minutosYaContados;
+    }
+
+    private BigDecimal obtenerTarifaGlobal(TipoVehiculo tipo, TipoTarifa tipoTarifa) {
+        return tarifaRepository.findByTipoVehiculoAndTipoTarifa(tipo, tipoTarifa)
                 .map(Tarifa::getValor)
-                .orElseThrow(() -> new ConfiguracionException("No existe tarifa configurada para " + tipo));
+                .orElseThrow(() -> new ConfiguracionException("No existe tarifa configurada para " + tipo + " " + tipoTarifa));
     }
 
     private void guardarEnHistorial(Ticket ticket) {
@@ -265,6 +251,7 @@ public class ParqueaderoServiceImpl implements ParqueaderoService {
         return tarifaRepository.findAll()
                 .stream()
                 .map(tarifa -> TarifaDTO.builder()
+                        .tipoVehiculo(tarifa.getTipoVehiculo().name())
                         .tipoTarifa(tarifa.getTipoTarifa().name())
                         .valor(tarifa.getValor())
                         .build())
@@ -335,7 +322,14 @@ public class ParqueaderoServiceImpl implements ParqueaderoService {
                 .max(Integer::compare)
                 .orElse(0);
                 
-        String prefijo = tipo == TipoVehiculo.CARRO ? "C-" : (tipo == TipoVehiculo.MOTO ? "M-" : "B-");
+        String prefijo;
+        switch (tipo) {
+            case CARRO: prefijo = "C-"; break;
+            case MOTO: prefijo = "M-"; break;
+            case CAMION: prefijo = "K-"; break;
+            case BICICLETA: prefijo = "B-"; break;
+            default: prefijo = "E-";
+        }
         
         List<Espacio> nuevosEspacios = new java.util.ArrayList<>();
         for (int i = 1; i <= request.getCantidad(); i++) {
@@ -392,20 +386,23 @@ public class ParqueaderoServiceImpl implements ParqueaderoService {
     @Override
     @Transactional
     public TarifaDTO guardarTarifa(TarifaDTO request) {
-        TipoTarifa tipo;
+        TipoVehiculo tipo;
+        TipoTarifa tTarifa;
         try {
-            tipo = TipoTarifa.valueOf(request.getTipoTarifa());
+            tipo = TipoVehiculo.valueOf(request.getTipoVehiculo().toUpperCase());
+            tTarifa = TipoTarifa.valueOf(request.getTipoTarifa().toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Tipo de tarifa inválido: " + request.getTipoTarifa());
+            throw new IllegalArgumentException("Tipo de vehículo o tarifa inválido: " + request.getTipoVehiculo() + " / " + request.getTipoTarifa());
         }
 
-        Tarifa tarifa = tarifaRepository.findByTipoTarifa(tipo)
-                .orElse(Tarifa.builder().tipoTarifa(tipo).build());
+        Tarifa tarifa = tarifaRepository.findByTipoVehiculoAndTipoTarifa(tipo, tTarifa)
+                .orElse(Tarifa.builder().tipoVehiculo(tipo).tipoTarifa(tTarifa).build());
         
         tarifa.setValor(request.getValor());
         tarifaRepository.save(tarifa);
         
         return TarifaDTO.builder()
+                .tipoVehiculo(tarifa.getTipoVehiculo().name())
                 .tipoTarifa(tarifa.getTipoTarifa().name())
                 .valor(tarifa.getValor())
                 .build();
@@ -413,30 +410,20 @@ public class ParqueaderoServiceImpl implements ParqueaderoService {
 
     @Override
     @Transactional
-    public void eliminarTarifa(String tipoTarifaStr) {
-        TipoTarifa tipo;
+    public void eliminarTarifa(String tipoVehiculoStr, String tipoTarifaStr) {
+        TipoVehiculo tipo;
+        TipoTarifa tTarifa;
         try {
-            tipo = TipoTarifa.valueOf(tipoTarifaStr.toUpperCase());
+            tipo = TipoVehiculo.valueOf(tipoVehiculoStr.toUpperCase());
+            tTarifa = TipoTarifa.valueOf(tipoTarifaStr.toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Tipo de tarifa inválido: " + tipoTarifaStr);
+            throw new IllegalArgumentException("Tipo de vehículo o tarifa inválido: " + tipoVehiculoStr + " / " + tipoTarifaStr);
         }
 
-        Tarifa tarifa = tarifaRepository.findByTipoTarifa(tipo)
-                .orElseThrow(() -> new ConfiguracionException("No existe tarifa configurada para " + tipo));
+        Tarifa tarifa = tarifaRepository.findByTipoVehiculoAndTipoTarifa(tipo, tTarifa)
+                .orElseThrow(() -> new ConfiguracionException("No existe tarifa configurada para " + tipo + " " + tTarifa));
         
         tarifaRepository.delete(tarifa);
-        log.info("Tarifa global eliminada: {}", tipo);
-    }
-
-    private void validarConfiguracionTarifa(TipoTarifa tipo) {
-        // Las tarifas POR_HORA y FRACCION dependen de la tarifaBase del Espacio, no de la tabla global.
-        if (tipo == TipoTarifa.POR_HORA || tipo == TipoTarifa.FRACCION) {
-            return;
-        }
-
-        // Para tarifas globales (POR_MINUTO, POR_DIA, POR_MES), verificamos que existan en la BD
-        if (tarifaRepository.findByTipoTarifa(tipo).isEmpty()) {
-            throw new ConfiguracionException("No existe tarifa configurada para el tipo: " + tipo);
-        }
+        log.info("Tarifa global eliminada: {} {}", tipo, tTarifa);
     }
 }

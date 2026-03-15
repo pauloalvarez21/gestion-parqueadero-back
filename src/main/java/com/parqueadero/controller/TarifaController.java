@@ -1,6 +1,7 @@
 package com.parqueadero.controller;
 
 import com.parqueadero.entity.Tarifa;
+import com.parqueadero.enums.TipoTarifa;
 import com.parqueadero.repository.TarifaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +23,7 @@ public class TarifaController {
 
     @PostMapping
     public ResponseEntity<Tarifa> guardarOActualizar(@RequestBody Tarifa tarifa) {
-        Tarifa guardada = tarifaRepository.findByTipoTarifa(tarifa.getTipoTarifa())
+        Tarifa guardada = tarifaRepository.findByTipoVehiculoAndTipoTarifa(tarifa.getTipoVehiculo(), tarifa.getTipoTarifa())
                 .map(existing -> {
                     existing.setValor(tarifa.getValor());
                     return tarifaRepository.save(existing);

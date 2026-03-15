@@ -15,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -73,8 +72,7 @@ public class DataSeeder implements CommandLineRunner {
                 "AAA-111", 
                 TipoVehiculo.CARRO, 
                 espaciosCarro.get(0), 
-                LocalDateTime.now().minusHours(2).minusMinutes(30),
-                TipoTarifa.POR_HORA
+                LocalDateTime.now().minusHours(2).minusMinutes(30)
         );
 
         // Escenario B: Moto que entró hace 15 minutos (Debe cobrar 1 hora o fracción según config)
@@ -82,11 +80,18 @@ public class DataSeeder implements CommandLineRunner {
                 "MMM-222", 
                 TipoVehiculo.MOTO, 
                 espaciosMoto.get(0), 
-                LocalDateTime.now().minusMinutes(15),
-                TipoTarifa.POR_HORA
+                LocalDateTime.now().minusMinutes(15)
         );
 
-        // Escenario C: Carro que ya salió (Historial)
+        // Escenario C: Camión que entró hace 5 horas
+        crearTicketActivo(
+                "KKK-555",
+                TipoVehiculo.CAMION,
+                todosEspacios.stream().filter(e -> e.getTipoVehiculoPermitido() == TipoVehiculo.CAMION).findFirst().get(),
+                LocalDateTime.now().minusHours(5)
+        );
+
+        // Escenario D: Carro que ya salió (Historial)
         crearHistorial("OLD-999", TipoVehiculo.CARRO);
 
         log.info("¡Datos de prueba cargados exitosamente!");
@@ -104,7 +109,7 @@ public class DataSeeder implements CommandLineRunner {
         }
     }
 
-    private void crearTicketActivo(String placa, TipoVehiculo tipo, Espacio espacio, LocalDateTime entrada, TipoTarifa tarifa) {
+    private void crearTicketActivo(String placa, TipoVehiculo tipo, Espacio espacio, LocalDateTime entrada) {
         // 1. Crear o buscar vehículo
         Vehiculo vehiculo = vehiculoRepository.findByPlaca(placa)
                 .orElseGet(() -> vehiculoRepository.save(
@@ -121,7 +126,7 @@ public class DataSeeder implements CommandLineRunner {
                 .vehiculo(vehiculo)
                 .espacio(espacio)
                 .horaEntrada(entrada)
-                .tipoTarifa(tarifa)
+                .tipoTarifa(TipoTarifa.POR_HORA)
                 .estado(EstadoTicket.ACTIVO)
                 .build();
         
