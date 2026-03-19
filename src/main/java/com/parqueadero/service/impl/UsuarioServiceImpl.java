@@ -7,6 +7,7 @@ import com.parqueadero.enums.Role;
 import com.parqueadero.repository.UsuarioRepository;
 import com.parqueadero.service.UsuarioService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +21,9 @@ import java.util.stream.Collectors;
 public class UsuarioServiceImpl implements UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
+
+    @Value("${admin.user.username:admin}")
+    private String adminUsername;
 
     @Override
     public List<UsuarioDTO> getAllUsers() {
@@ -59,6 +63,10 @@ public class UsuarioServiceImpl implements UsuarioService {
     @Override
     @Transactional
     public void eliminarUsuario(String username) {
+        if (username.equalsIgnoreCase(adminUsername)) {
+            throw new IllegalArgumentException("No se puede eliminar el usuario administrador principal.");
+        }
+
         Usuario usuario = usuarioRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado con el username: " + username));
         usuarioRepository.delete(usuario);

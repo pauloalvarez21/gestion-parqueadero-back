@@ -84,6 +84,11 @@ public class ParqueaderoController {
         return ResponseEntity.ok(parqueaderoService.eliminarEspacios(request));
     }
 
+    @GetMapping("/historial")
+    public ResponseEntity<List<HistorialDTO>> listarHistorial() {
+        return ResponseEntity.ok(parqueaderoService.listarHistorial());
+    }
+
     @Operation(summary = "Elimina una tarifa global (Admin)")
     @DeleteMapping("/tarifas/{tipoVehiculo}/{tipoTarifa}")
     public ResponseEntity<Void> eliminarTarifa(@PathVariable String tipoVehiculo, @PathVariable String tipoTarifa) {

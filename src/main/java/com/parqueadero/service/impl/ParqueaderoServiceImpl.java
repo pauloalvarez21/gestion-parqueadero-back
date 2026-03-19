@@ -9,6 +9,7 @@ import com.parqueadero.repository.*;
 import com.parqueadero.service.ParqueaderoService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +31,7 @@ public class ParqueaderoServiceImpl implements ParqueaderoService {
     private final VehiculoRepository vehiculoRepository;
     private final HistorialRepository historialRepository;
     private final TarifaRepository tarifaRepository;
+    private final UsuarioRepository usuarioRepository;
     private final ParqueaderoMapper mapper;
 
     @Override
@@ -67,6 +69,7 @@ public class ParqueaderoServiceImpl implements ParqueaderoService {
             .horaEntrada(LocalDateTime.now())
             .tipoTarifa(tipoTarifa)
             .estado(EstadoTicket.ACTIVO)
+            .creadoPor(obtenerUsuarioAutenticado())
             .build();
         
         ticket = ticketRepository.save(ticket);
@@ -98,6 +101,7 @@ public class ParqueaderoServiceImpl implements ParqueaderoService {
         LocalDateTime horaSalida = LocalDateTime.now();
         ticket.setHoraSalida(horaSalida);
         ticket.setObservaciones(request.getObservaciones());
+        ticket.setFinalizadoPor(obtenerUsuarioAutenticado());
         
         // Calcular pago
         PagoResponse pago = calcularPago(ticket);
@@ -188,6 +192,8 @@ public class ParqueaderoServiceImpl implements ParqueaderoService {
             .descuento(descuento)
             .valorTotal(valorTotal.setScale(2, RoundingMode.HALF_UP))
             .mensaje("Pago calculado exitosamente")
+            .creadoPor(ticket.getCreadoPor() != null ? ticket.getCreadoPor().getUsername() : null)
+            .finalizadoPor(ticket.getFinalizadoPor() != null ? ticket.getFinalizadoPor().getUsername() : null)
             .build();
     }
 
@@ -211,9 +217,16 @@ public class ParqueaderoServiceImpl implements ParqueaderoService {
             .horaSalida(ticket.getHoraSalida())
             .duracionMinutos(minutos)
             .valorTotal(ticket.getValorTotal())
+            .creadoPor(ticket.getCreadoPor() != null ? ticket.getCreadoPor().getUsername() : "SISTEMA")
+            .finalizadoPor(ticket.getFinalizadoPor() != null ? ticket.getFinalizadoPor().getUsername() : "SISTEMA")
             .build();
         
         historialRepository.save(historial);
+    }
+
+    private Usuario obtenerUsuarioAutenticado() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        return usuarioRepository.findByUsername(username).orElse(null);
     }
 
     private Vehiculo crearNuevoVehiculo(EntradaRequest request) {
@@ -425,5 +438,13 @@ public class ParqueaderoServiceImpl implements ParqueaderoService {
         
         tarifaRepository.delete(tarifa);
         log.info("Tarifa global eliminada: {} {}", tipo, tTarifa);
+    }
+
+    @Override
+    public List<HistorialDTO> listarHistorial() {
+        return historialRepository.findAll()
+                .stream()
+                .map(mapper::toHistorialDTO)
+                .collect(Collectors.toList());
     }
 }

@@ -12,17 +12,15 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class PagoResponse {
-    private String codigoTicket;
+public class HistorialDTO {
+    private Long id;
+    private String placaVehiculo;
+    private String codigoEspacio;
     private LocalDateTime horaEntrada;
     private LocalDateTime horaSalida;
-    private Long duracionHoras;
     private Long duracionMinutos;
-    private BigDecimal valorBase;
-    private BigDecimal valorAdicional;
-    private BigDecimal descuento;
     private BigDecimal valorTotal;
-    private String mensaje;
+    private LocalDateTime fechaRegistro;
     private String creadoPor;
     private String finalizadoPor;
 }

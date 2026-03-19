@@ -42,6 +42,12 @@ public class Historial {
     
     @Column(name = "fecha_registro")
     private LocalDateTime fechaRegistro;
+
+    @Column(name = "creado_por")
+    private String creadoPor;
+
+    @Column(name = "finalizado_por")
+    private String finalizadoPor;
     
     @PrePersist
     protected void onCreate() {

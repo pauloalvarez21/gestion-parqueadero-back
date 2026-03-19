@@ -38,9 +38,7 @@ public class AuthController {
         var user = Usuario.builder()
                 .username(request.getUsername())
                 .password(passwordEncoder.encode(request.getPassword()))
-                // Por seguridad, el registro público siempre crea usuarios con rol USER.
-                // Los roles de OPERADOR o ADMIN los debe asignar un ADMIN existente.
-                .role(Role.USER)
+                .role(request.getRole() != null ? request.getRole() : Role.USER)
                 .build();
         
         usuarioRepository.save(user);

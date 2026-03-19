@@ -12,6 +12,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 import java.util.Optional;
@@ -45,6 +46,8 @@ class UsuarioServiceImplTest {
                 .username("admin")
                 .role("ADMIN")
                 .build();
+        
+        ReflectionTestUtils.setField(usuarioService, "adminUsername", "admin");
     }
 
     @Test
@@ -108,5 +111,38 @@ class UsuarioServiceImplTest {
         // Act & Assert
         assertThrows(IllegalArgumentException.class, () -> usuarioService.cambiarRol(username, request));
         verify(usuarioRepository, never()).save(any(Usuario.class));
+    }
+    @Test
+    void eliminarUsuario_cuandoExito_deberiaLlamarDelete() {
+        // Arrange
+        String username = "otroUser";
+        Usuario otroUsuario = Usuario.builder().username(username).build();
+        when(usuarioRepository.findByUsername(username)).thenReturn(Optional.of(otroUsuario));
+
+        // Act
+        usuarioService.eliminarUsuario(username);
+
+        // Assert
+        verify(usuarioRepository, times(1)).findByUsername(username);
+        verify(usuarioRepository, times(1)).delete(otroUsuario);
+    }
+
+    @Test
+    void eliminarUsuario_cuandoUsuarioNoExiste_deberiaLanzarUsernameNotFoundException() {
+        // Arrange
+        String username = "inexistente";
+        when(usuarioRepository.findByUsername(username)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThrows(UsernameNotFoundException.class, () -> usuarioService.eliminarUsuario(username));
+        verify(usuarioRepository, never()).delete(any(Usuario.class));
+    }
+    @Test
+    void eliminarUsuario_cuandoAdmin_deberiaLanzarException() {
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, 
+            () -> usuarioService.eliminarUsuario("admin"));
+        assertEquals("No se puede eliminar el usuario administrador principal.", exception.getMessage());
+        verify(usuarioRepository, never()).delete(any());
     }
 }

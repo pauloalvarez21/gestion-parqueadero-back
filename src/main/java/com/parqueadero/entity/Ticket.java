@@ -68,4 +68,12 @@ public class Ticket {
     
     @Column(name = "fecha_pago")
     private LocalDateTime fechaPago;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "creado_por_id")
+    private Usuario creadoPor;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "finalizado_por_id")
+    private Usuario finalizadoPor;
 }

@@ -19,4 +19,5 @@ public interface ParqueaderoService {
     void eliminarTarifa(String tipoVehiculo, String tipoTarifa);
 
     EstadisticasDTO obtenerEstadisticas();
+    List<HistorialDTO> listarHistorial();
 }

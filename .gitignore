@@ -33,4 +33,4 @@ build/
 .vscode/
 /var.txt
 /parqueadero-thunder-collection.json
-/parqueadero-api-openapi.yaml
+/parqueadero-api-openapi.yaml/data/

@@ -27,4 +27,6 @@ public class TicketDTO {
     private BigDecimal valorTotal;
     private String estado;
     private String observaciones;
+    private String creadoPor;
+    private String finalizadoPor;
 }
