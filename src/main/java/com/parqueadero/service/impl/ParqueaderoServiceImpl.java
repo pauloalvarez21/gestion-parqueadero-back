@@ -32,6 +32,7 @@ public class ParqueaderoServiceImpl implements ParqueaderoService {
     private final HistorialRepository historialRepository;
     private final TarifaRepository tarifaRepository;
     private final UsuarioRepository usuarioRepository;
+    private final ResolucionFacturaRepository resolucionFacturaRepository;
     private final ParqueaderoMapper mapper;
 
     @Override
@@ -120,11 +121,33 @@ public class ParqueaderoServiceImpl implements ParqueaderoService {
         
         ticketRepository.save(ticket);
         
+        // Generar Factura DIAN
+        asignarNumeroFactura(ticket);
+        
         // Guardar en historial
         guardarEnHistorial(ticket);
         
-        log.info("Salida procesada. Total a pagar: {}", pago.getValorTotal());
-        return pago;
+        PagoResponse respuesta = pago;
+        respuesta.setNumeroFactura(ticket.getNumeroFactura());
+        
+        log.info("Salida procesada. Total a pagar: {}. Factura: {}", pago.getValorTotal(), ticket.getNumeroFactura());
+        return respuesta;
+    }
+
+    private void asignarNumeroFactura(Ticket ticket) {
+        ResolucionFactura resolucion = resolucionFacturaRepository.findActiveResolution()
+            .orElseThrow(() -> new ConfiguracionException("No existe una resolución de facturación DIAN activa y vigente."));
+
+        if (resolucion.getNumeroActual() >= resolucion.getNumeroHasta()) {
+            throw new ResolucionFacturaExcedidaException("Se ha alcanzado el límite de numeración de la resolución DIAN: " + resolucion.getNumeroHasta());
+        }
+
+        resolucion.setNumeroActual(resolucion.getNumeroActual() + 1);
+        String prefijo = resolucion.getPrefijo() != null ? resolucion.getPrefijo() : "";
+        ticket.setNumeroFactura(prefijo + resolucion.getNumeroActual());
+        
+        resolucionFacturaRepository.save(resolucion);
+        ticketRepository.save(ticket);
     }
 
     private PagoResponse calcularPago(Ticket ticket) {
@@ -219,6 +242,7 @@ public class ParqueaderoServiceImpl implements ParqueaderoService {
             .valorTotal(ticket.getValorTotal())
             .creadoPor(ticket.getCreadoPor() != null ? ticket.getCreadoPor().getUsername() : "SISTEMA")
             .finalizadoPor(ticket.getFinalizadoPor() != null ? ticket.getFinalizadoPor().getUsername() : "SISTEMA")
+            .numeroFactura(ticket.getNumeroFactura())
             .build();
         
         historialRepository.save(historial);
@@ -446,5 +470,42 @@ public class ParqueaderoServiceImpl implements ParqueaderoService {
                 .stream()
                 .map(mapper::toHistorialDTO)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public ResolucionFacturaDTO configurarResolucion(ResolucionFacturaDTO request) {
+        log.info("Configurando nueva resolución DIAN: {}", request.getNumeroResolucion());
+        
+        // Desactivar resoluciones anteriores
+        resolucionFacturaRepository.findAll().stream()
+                .filter(ResolucionFactura::isActiva)
+                .forEach(r -> {
+                    r.setActiva(false);
+                    resolucionFacturaRepository.save(r);
+                });
+
+        ResolucionFactura resolucion = ResolucionFactura.builder()
+                .numeroResolucion(request.getNumeroResolucion())
+                .fechaResolucion(request.getFechaResolucion())
+                .prefijo(request.getPrefijo())
+                .numeroDesde(request.getNumeroDesde())
+                .numeroHasta(request.getNumeroHasta())
+                .numeroActual(request.getNumeroActual())
+                .fechaInicio(request.getFechaInicio())
+                .fechaFin(request.getFechaFin())
+                .activa(true)
+                .mensajePiePagina(request.getMensajePiePagina())
+                .build();
+        
+        resolucion = resolucionFacturaRepository.save(resolucion);
+        return mapper.toResolucionDTO(resolucion);
+    }
+
+    @Override
+    public ResolucionFacturaDTO obtenerResolucionActiva() {
+        return resolucionFacturaRepository.findActiveResolution()
+                .map(mapper::toResolucionDTO)
+                .orElse(null);
     }
 }

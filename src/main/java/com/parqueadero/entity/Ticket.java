@@ -76,4 +76,7 @@ public class Ticket {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "finalizado_por_id")
     private Usuario finalizadoPor;
+
+    @Column(name = "numero_factura", length = 30)
+    private String numeroFactura;
 }

@@ -95,4 +95,16 @@ public class ParqueaderoController {
         parqueaderoService.eliminarTarifa(tipoVehiculo, tipoTarifa);
         return ResponseEntity.noContent().build();
     }
+
+    @Operation(summary = "Configura la resolución de facturación DIAN (Admin)")
+    @PostMapping("/facturacion/resolucion")
+    public ResponseEntity<ResolucionFacturaDTO> configurarResolucion(@RequestBody ResolucionFacturaDTO request) {
+        return ResponseEntity.ok(parqueaderoService.configurarResolucion(request));
+    }
+
+    @Operation(summary = "Obtiene la resolución de facturación activa")
+    @GetMapping("/facturacion/resolucion/activa")
+    public ResponseEntity<ResolucionFacturaDTO> obtenerResolucionActiva() {
+        return ResponseEntity.ok(parqueaderoService.obtenerResolucionActiva());
+    }
 }

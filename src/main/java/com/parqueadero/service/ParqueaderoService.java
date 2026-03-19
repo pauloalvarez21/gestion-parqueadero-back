@@ -20,4 +20,7 @@ public interface ParqueaderoService {
 
     EstadisticasDTO obtenerEstadisticas();
     List<HistorialDTO> listarHistorial();
+
+    ResolucionFacturaDTO configurarResolucion(ResolucionFacturaDTO request);
+    ResolucionFacturaDTO obtenerResolucionActiva();
 }

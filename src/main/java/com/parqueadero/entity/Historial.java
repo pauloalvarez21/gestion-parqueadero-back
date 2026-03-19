@@ -48,6 +48,9 @@ public class Historial {
 
     @Column(name = "finalizado_por")
     private String finalizadoPor;
+
+    @Column(name = "numero_factura", length = 30)
+    private String numeroFactura;
     
     @PrePersist
     protected void onCreate() {

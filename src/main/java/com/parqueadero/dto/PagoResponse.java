@@ -25,4 +25,5 @@ public class PagoResponse {
     private String mensaje;
     private String creadoPor;
     private String finalizadoPor;
+    private String numeroFactura;
 }

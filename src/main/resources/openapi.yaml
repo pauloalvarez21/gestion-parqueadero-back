@@ -134,6 +134,8 @@ components:
           type: string
         finalizadoPor:
           type: string
+        numeroFactura:
+          type: string
 
     PagoResponse:
       type: object
@@ -165,6 +167,8 @@ components:
         creadoPor:
           type: string
         finalizadoPor:
+          type: string
+        numeroFactura:
           type: string
 
     EspacioDTO:
@@ -249,6 +253,8 @@ components:
           type: string
         finalizadoPor:
           type: string
+        numeroFactura:
+          type: string
 
     AgregarEspaciosRequest:
       type: object
@@ -305,6 +311,36 @@ components:
         fechaRegistro:
           type: string
           format: date-time
+
+    ResolucionFacturaDTO:
+      type: object
+      properties:
+        numeroResolucion:
+          type: string
+        fechaResolucion:
+          type: string
+          format: date
+        prefijo:
+          type: string
+        numeroDesde:
+          type: integer
+          format: int64
+        numeroHasta:
+          type: integer
+          format: int64
+        numeroActual:
+          type: integer
+          format: int64
+        fechaInicio:
+          type: string
+          format: date
+        fechaFin:
+          type: string
+          format: date
+        activa:
+          type: boolean
+        mensajePiePagina:
+          type: string
 
     # --- Entity Tarifa ---
     Tarifa:
@@ -631,6 +667,36 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/EspacioDTO"
+
+  /api/parqueadero/facturacion/resolucion:
+    post:
+      summary: Configurar resolución de facturación DIAN (Admin)
+      tags: [Parqueadero]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResolucionFacturaDTO"
+      responses:
+        "200":
+          description: Resolución configurada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResolucionFacturaDTO"
+
+  /api/parqueadero/facturacion/resolucion/activa:
+    get:
+      summary: Obtener resolución activa
+      tags: [Parqueadero]
+      responses:
+        "200":
+          description: Resolución activa
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResolucionFacturaDTO"
 
   # --- Vehiculo Controller ---
   /api/vehiculos:

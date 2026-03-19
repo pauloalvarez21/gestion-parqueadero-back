@@ -2,6 +2,7 @@ package com.parqueadero.config;
 
 import com.parqueadero.entity.Espacio;
 import com.parqueadero.entity.Tarifa;
+import com.parqueadero.entity.ResolucionFactura;
 import com.parqueadero.entity.Usuario;
 import com.parqueadero.enums.EstadoEspacio;
 import com.parqueadero.enums.Role;
@@ -9,6 +10,7 @@ import com.parqueadero.enums.Role;
 import com.parqueadero.enums.TipoTarifa;
 import com.parqueadero.enums.TipoVehiculo;
 import com.parqueadero.repository.EspacioRepository;
+import com.parqueadero.repository.ResolucionFacturaRepository;
 import com.parqueadero.repository.TarifaRepository;
 import com.parqueadero.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +22,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,6 +36,7 @@ public class DataInitializer implements CommandLineRunner {
     private final TarifaRepository tarifaRepository;
     private final UsuarioRepository usuarioRepository;
     private final EspacioRepository espacioRepository;
+    private final ResolucionFacturaRepository resolucionFacturaRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Value("${admin.user.username:admin}")
@@ -60,6 +64,7 @@ public class DataInitializer implements CommandLineRunner {
         crearTarifasGlobalesSiNoExisten();
         crearAdminSiNoExiste();
         crearEspaciosSiNoExisten();
+        crearResolucionFacturaSiNoExiste();
         log.info("--- INICIALIZACIÓN DE DATOS ESENCIALES COMPLETADA ---");
     }
 
@@ -171,6 +176,27 @@ public class DataInitializer implements CommandLineRunner {
                 log.info("{} espacios creados exitosamente ({} Carro, {} Moto, {} Bicicleta, {} Camion).", 
                     nuevosEspacios.size(), cuposCarro, cuposMoto, cuposBicicleta, cuposCamion);
             }
+        }
+    }
+
+    private void crearResolucionFacturaSiNoExiste() {
+        if (resolucionFacturaRepository.count() == 0) {
+            log.info("Creando resolución de facturación DIAN inicial...");
+            ResolucionFactura resolucion = ResolucionFactura.builder()
+                    .numeroResolucion("187640000001")
+                    .fechaResolucion(LocalDate.now())
+                    .prefijo("SETT")
+                    .numeroDesde(1L)
+                    .numeroHasta(5000L)
+                    .numeroActual(0L)
+                    .fechaInicio(LocalDate.now())
+                    .fechaFin(LocalDate.now().plusYears(1))
+                    .activa(true)
+                    .mensajePiePagina("Factura de prueba autorizada por la DIAN")
+                    .build();
+            resolucionFacturaRepository.save(resolucion);
+            log.info("Resolución de facturación DIAN creada exitosamente: {} {}-{}", 
+                resolucion.getPrefijo(), resolucion.getNumeroDesde(), resolucion.getNumeroHasta());
         }
     }
 }

@@ -2,10 +2,12 @@ package com.parqueadero.mapper;
 
 import com.parqueadero.dto.EspacioDTO;
 import com.parqueadero.dto.HistorialDTO;
+import com.parqueadero.dto.ResolucionFacturaDTO;
 import com.parqueadero.dto.TicketDTO;
 import com.parqueadero.dto.VehiculoDTO;
 import com.parqueadero.entity.Espacio;
 import com.parqueadero.entity.Historial;
+import com.parqueadero.entity.ResolucionFactura;
 import com.parqueadero.entity.Ticket;
 import com.parqueadero.entity.Vehiculo;
 import org.mapstruct.Mapper;
@@ -24,4 +26,6 @@ public interface ParqueaderoMapper {
     EspacioDTO toEspacioDTO(Espacio espacio);
 
     HistorialDTO toHistorialDTO(Historial historial);
+
+    ResolucionFacturaDTO toResolucionDTO(ResolucionFactura resolucion);
 }
