@@ -43,7 +43,8 @@ public class VehiculoServiceImpl implements VehiculoService {
 
     @Override
     public VehiculoDTO obtenerVehiculoPorPlaca(String placa) {
-        Vehiculo vehiculo = vehiculoRepository.findByPlaca(placa.toUpperCase())
+        String normalizedPlaca = placa.replaceAll("[^A-Za-z0-9]", "").toUpperCase();
+        Vehiculo vehiculo = vehiculoRepository.findByPlaca(normalizedPlaca)
             .orElseThrow(() -> new VehiculoNoEncontradoException("Vehículo no encontrado: " + placa));
         return mapper.toVehiculoDTO(vehiculo);
     }

@@ -29,4 +29,5 @@ public class TicketDTO {
     private String observaciones;
     private String creadoPor;
     private String finalizadoPor;
+    private String numeroFactura;
 }

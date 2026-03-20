@@ -23,4 +23,5 @@ public class HistorialDTO {
     private LocalDateTime fechaRegistro;
     private String creadoPor;
     private String finalizadoPor;
+    private String numeroFactura;
 }

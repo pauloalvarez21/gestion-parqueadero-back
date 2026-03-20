@@ -9,10 +9,12 @@ import com.parqueadero.enums.Role;
 
 import com.parqueadero.enums.TipoTarifa;
 import com.parqueadero.enums.TipoVehiculo;
+import com.parqueadero.entity.Vehiculo;
 import com.parqueadero.repository.EspacioRepository;
 import com.parqueadero.repository.ResolucionFacturaRepository;
 import com.parqueadero.repository.TarifaRepository;
 import com.parqueadero.repository.UsuarioRepository;
+import com.parqueadero.repository.VehiculoRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,6 +39,7 @@ public class DataInitializer implements CommandLineRunner {
     private final UsuarioRepository usuarioRepository;
     private final EspacioRepository espacioRepository;
     private final ResolucionFacturaRepository resolucionFacturaRepository;
+    private final VehiculoRepository vehiculoRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Value("${admin.user.username:admin}")
@@ -65,6 +68,7 @@ public class DataInitializer implements CommandLineRunner {
         crearAdminSiNoExiste();
         crearEspaciosSiNoExisten();
         crearResolucionFacturaSiNoExiste();
+        crearVehiculosPruebaSiNoExisten();
         log.info("--- INICIALIZACIÓN DE DATOS ESENCIALES COMPLETADA ---");
     }
 
@@ -197,6 +201,38 @@ public class DataInitializer implements CommandLineRunner {
             resolucionFacturaRepository.save(resolucion);
             log.info("Resolución de facturación DIAN creada exitosamente: {} {}-{}", 
                 resolucion.getPrefijo(), resolucion.getNumeroDesde(), resolucion.getNumeroHasta());
+        }
+    }
+
+    private void crearVehiculosPruebaSiNoExisten() {
+        log.info("Verificando existencia de vehículos de prueba...");
+        
+        if (vehiculoRepository.findByPlaca("ABC123").isEmpty()) {
+            log.info("Creando carro de prueba ABC123...");
+            Vehiculo carro = Vehiculo.builder()
+                .placa("ABC123")
+                .tipo(TipoVehiculo.CARRO)
+                .marca("Toyota")
+                .modelo("Corolla 2024")
+                .color("Blanco Perlado")
+                .nombrePropietario("Juan Perez")
+                .telefonoPropietario("3001234567")
+                .build();
+            vehiculoRepository.save(carro);
+        }
+
+        if (vehiculoRepository.findByPlaca("XYZ789").isEmpty()) {
+            log.info("Creando moto de prueba XYZ789...");
+            Vehiculo moto = Vehiculo.builder()
+                .placa("XYZ789")
+                .tipo(TipoVehiculo.MOTO)
+                .marca("Yamaha")
+                .modelo("MT-03")
+                .color("Negro Mate")
+                .nombrePropietario("Maria Lopez")
+                .telefonoPropietario("3119876543")
+                .build();
+            vehiculoRepository.save(moto);
         }
     }
 }
