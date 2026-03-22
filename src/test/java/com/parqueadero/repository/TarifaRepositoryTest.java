@@ -26,6 +26,7 @@ class TarifaRepositoryTest {
         // Arrange
         Tarifa tarifa = Tarifa.builder()
                 .tipoVehiculo(TipoVehiculo.CARRO)
+                .tipoTarifa(com.parqueadero.enums.TipoTarifa.POR_HORA)
                 .valor(BigDecimal.valueOf(100.0))
                 .build();
         entityManager.persist(tarifa);

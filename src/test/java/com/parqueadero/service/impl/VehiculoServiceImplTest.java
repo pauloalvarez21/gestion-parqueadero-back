@@ -58,8 +58,9 @@ class VehiculoServiceImplTest {
     void obtenerVehiculoPorPlaca_cuandoVehiculoExiste_deberiaRetornarVehiculoDTO() {
         // 1. Arrange (Preparar)
         String placa = "ABC-123";
+        String normalizedPlaca = placa.replaceAll("[^A-Za-z0-9]", "").toUpperCase();
         // Simulamos que el repositorio encuentra el vehículo
-        when(vehiculoRepository.findByPlaca(placa.toUpperCase())).thenReturn(Optional.of(vehiculo));
+        when(vehiculoRepository.findByPlaca(normalizedPlaca)).thenReturn(Optional.of(vehiculo));
         // Simulamos que el mapper convierte la entidad a DTO
         when(mapper.toVehiculoDTO(any(Vehiculo.class))).thenReturn(vehiculoDTO);
 
@@ -76,8 +77,9 @@ class VehiculoServiceImplTest {
     void obtenerVehiculoPorPlaca_cuandoVehiculoNoExiste_deberiaLanzarExcepcion() {
         // 1. Arrange (Preparar)
         String placa = "XYZ-789";
+        String normalizedPlaca = placa.replaceAll("[^A-Za-z0-9]", "").toUpperCase();
         // Simulamos que el repositorio NO encuentra el vehículo
-        when(vehiculoRepository.findByPlaca(placa.toUpperCase())).thenReturn(Optional.empty());
+        when(vehiculoRepository.findByPlaca(normalizedPlaca)).thenReturn(Optional.empty());
 
         // 2. Act & 3. Assert (Actuar y Afirmar)
         assertThrows(VehiculoNoEncontradoException.class, () -> vehiculoService.obtenerVehiculoPorPlaca(placa));

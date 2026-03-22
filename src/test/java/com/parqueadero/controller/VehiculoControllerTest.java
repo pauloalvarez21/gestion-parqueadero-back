@@ -1,6 +1,7 @@
 package com.parqueadero.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.parqueadero.config.JwtService;
 import com.parqueadero.dto.VehiculoDTO;
 import com.parqueadero.exception.VehiculoNoEncontradoException;
 import com.parqueadero.service.VehiculoService;
@@ -11,9 +12,8 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.security.test.context.support.WithMockUser;
-
+import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
@@ -24,12 +24,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 @SpringBootTest
 @AutoConfigureMockMvc
-@WithMockUser
 class VehiculoControllerTest {
-
-
 
     @Autowired
     private MockMvc mockMvc;
@@ -39,6 +37,9 @@ class VehiculoControllerTest {
 
     @MockBean
     private VehiculoService vehiculoService;
+
+    @MockBean
+    private JwtService jwtService;
 
     private VehiculoDTO vehiculoDTO;
 
@@ -53,6 +54,7 @@ class VehiculoControllerTest {
     }
 
     @Test
+    @WithMockUser(authorities = {"ADMIN", "OPERADOR"})
     void obtenerVehiculoPorPlaca_cuandoVehiculoExiste_deberiaRetornar200_y_VehiculoDTO() throws Exception {
         // Arrange
         String placa = "FNS-541";
@@ -67,6 +69,7 @@ class VehiculoControllerTest {
     }
 
     @Test
+    @WithMockUser(authorities = {"ADMIN", "OPERADOR"})
     void obtenerVehiculoPorPlaca_cuandoVehiculoNoExiste_deberiaRetornar404() throws Exception {
         // Arrange
         String placa = "XYZ-999";
@@ -82,6 +85,7 @@ class VehiculoControllerTest {
     }
 
     @Test
+    @WithMockUser(authorities = {"ADMIN", "OPERADOR"})
     void registrarVehiculo_deberiaRetornar201() throws Exception {
         when(vehiculoService.registrarVehiculo(any(VehiculoDTO.class))).thenReturn(vehiculoDTO);
 
@@ -93,6 +97,7 @@ class VehiculoControllerTest {
     }
 
     @Test
+    @WithMockUser(authorities = {"ADMIN", "OPERADOR"})
     void listarVehiculos_deberiaRetornarLista() throws Exception {
         when(vehiculoService.listarTodos()).thenReturn(List.of(vehiculoDTO));
 

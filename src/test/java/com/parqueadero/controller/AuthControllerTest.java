@@ -22,9 +22,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -112,21 +110,4 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.token").value("fake_token"));
     }
 
-    @Test
-    void eliminarUsuario_deberiaRetornar204_cuandoExiste() throws Exception {
-        String username = "testuser";
-        when(usuarioRepository.findByUsername(username)).thenReturn(Optional.of(usuario));
-
-        mockMvc.perform(delete("/api/auth/eliminar/{username}", username))
-                .andExpect(status().isNoContent());
-    }
-
-    @Test
-    void eliminarUsuario_deberiaRetornar404_cuandoNoExiste() throws Exception {
-        String username = "inexistente";
-        when(usuarioRepository.findByUsername(username)).thenReturn(Optional.empty());
-
-        mockMvc.perform(delete("/api/auth/eliminar/{username}", username))
-                .andExpect(status().isNotFound());
-    }
 }

@@ -20,6 +20,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -44,6 +47,10 @@ class ParqueaderoServiceImplTest {
     private TarifaRepository tarifaRepository;
     @Mock
     private ParqueaderoMapper mapper;
+    @Mock
+    private UsuarioRepository usuarioRepository;
+    @Mock
+    private ResolucionFacturaRepository resolucionFacturaRepository;
 
     @InjectMocks
     private ParqueaderoServiceImpl parqueaderoService;
@@ -66,6 +73,32 @@ class ParqueaderoServiceImplTest {
         espacio.setEstado(EstadoEspacio.DISPONIBLE);
         espacio.setTipoVehiculoPermitido(TipoVehiculo.CARRO);
         espacio.setTarifaBase(new BigDecimal("3000"));
+
+        // Configurar SecurityContext mock para tests que requieren autenticación (lenient)
+        SecurityContext securityContext = mock(SecurityContext.class);
+        lenient().when(securityContext.getAuthentication()).thenReturn(
+            new UsernamePasswordAuthenticationToken("testUser", null)
+        );
+        SecurityContextHolder.setContext(securityContext);
+
+        // Configurar mock de usuario autenticado (lenient porque no todos los tests lo usan)
+        lenient().when(usuarioRepository.findByUsername("testUser")).thenReturn(
+            Optional.of(com.parqueadero.entity.Usuario.builder()
+                .id(1L)
+                .username("testUser")
+                .build())
+        );
+
+        // Configurar resolucion de factura (lenient)
+        lenient().when(resolucionFacturaRepository.findActiveResolution()).thenReturn(
+            Optional.of(com.parqueadero.entity.ResolucionFactura.builder()
+                .id(1L)
+                .prefijo("FC")
+                .numeroActual(100L)
+                .numeroDesde(1L)
+                .numeroHasta(1000L)
+                .build())
+        );
     }
 
     @Test
@@ -134,9 +167,15 @@ class ParqueaderoServiceImplTest {
                 .build();
 
         when(ticketRepository.findByCodigo("TKT-TEST")).thenReturn(Optional.of(ticket));
-        
-        com.parqueadero.entity.Tarifa tarifaMock = com.parqueadero.entity.Tarifa.builder().tipoVehiculo(TipoVehiculo.CARRO).valor(new BigDecimal("3000")).build();
-        when(tarifaRepository.findByTipoVehiculo(TipoVehiculo.CARRO)).thenReturn(Optional.of(tarifaMock));
+
+        // Configurar tarifa POR_HORA para CARRO
+        com.parqueadero.entity.Tarifa tarifaHora = com.parqueadero.entity.Tarifa.builder()
+            .tipoVehiculo(TipoVehiculo.CARRO)
+            .tipoTarifa(com.parqueadero.enums.TipoTarifa.POR_HORA)
+            .valor(new BigDecimal("3000"))
+            .build();
+        when(tarifaRepository.findByTipoVehiculoAndTipoTarifa(TipoVehiculo.CARRO, com.parqueadero.enums.TipoTarifa.POR_HORA))
+            .thenReturn(Optional.of(tarifaHora));
 
         // Act
         PagoResponse pagoResponse = parqueaderoService.registrarSalida(salidaRequest);
@@ -148,7 +187,7 @@ class ParqueaderoServiceImplTest {
         assertEquals(EstadoTicket.PAGADO, ticket.getEstado());
 
         verify(espacioRepository, times(1)).save(espacio);
-        verify(ticketRepository, times(1)).save(ticket);
+        verify(ticketRepository, times(2)).save(ticket);
         verify(historialRepository, times(1)).save(any());
     }
 }

@@ -6,9 +6,6 @@ import com.parqueadero.enums.TipoVehiculo;
 import com.parqueadero.repository.TarifaRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -52,7 +49,7 @@ class TarifaControllerTest {
 
 
     @Test
-    @WithMockUser
+    @WithMockUser(authorities = "ADMIN")
     void listarTarifas_deberiaRetornar200() throws Exception {
         when(tarifaRepository.findAll()).thenReturn(List.of(tarifa));
 

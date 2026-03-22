@@ -113,18 +113,20 @@ class UsuarioServiceImplTest {
         verify(usuarioRepository, never()).save(any(Usuario.class));
     }
     @Test
-    void eliminarUsuario_cuandoExito_deberiaLlamarDelete() {
+    void eliminarUsuario_cuandoExito_deberiaDesactivarUsuario() {
         // Arrange
         String username = "otroUser";
-        Usuario otroUsuario = Usuario.builder().username(username).build();
+        Usuario otroUsuario = Usuario.builder().id(2L).username(username).activo(true).build();
         when(usuarioRepository.findByUsername(username)).thenReturn(Optional.of(otroUsuario));
+        when(usuarioRepository.save(any(Usuario.class))).thenReturn(otroUsuario);
 
         // Act
         usuarioService.eliminarUsuario(username);
 
         // Assert
         verify(usuarioRepository, times(1)).findByUsername(username);
-        verify(usuarioRepository, times(1)).delete(otroUsuario);
+        verify(usuarioRepository, times(1)).save(any(Usuario.class));
+        assertFalse(otroUsuario.isActivo());
     }
 
     @Test
