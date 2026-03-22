@@ -28,6 +28,7 @@ public class UsuarioServiceImpl implements UsuarioService {
     @Override
     public List<UsuarioDTO> getAllUsers() {
         return usuarioRepository.findAll().stream()
+                .filter(Usuario::isActivo)
                 .map(usuario -> UsuarioDTO.builder()
                         .id(usuario.getId())
                         .username(usuario.getUsername())
@@ -41,6 +42,10 @@ public class UsuarioServiceImpl implements UsuarioService {
     public UsuarioDTO cambiarRol(String username, CambiarRolRequestDTO request) {
         Usuario usuario = usuarioRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado con el username: " + username));
+
+        if (!usuario.isActivo()) {
+            throw new IllegalArgumentException("No se puede cambiar el rol de un usuario eliminado o inactivo.");
+        }
 
         Role newRole;
         try {
@@ -66,9 +71,17 @@ public class UsuarioServiceImpl implements UsuarioService {
         if (username.equalsIgnoreCase(adminUsername)) {
             throw new IllegalArgumentException("No se puede eliminar el usuario administrador principal.");
         }
-
+    
         Usuario usuario = usuarioRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado con el username: " + username));
-        usuarioRepository.delete(usuario);
+        
+        if (!usuario.isActivo()) {
+            throw new IllegalArgumentException("El usuario '" + username + "' ya se encuentra eliminado o inactivo.");
+        }
+
+        // En lugar de borrar físicamente, desactivamos el usuario.
+        // Esto mantiene la integridad referencial con los tickets y el historial.
+        usuario.setActivo(false);
+        usuarioRepository.save(usuario);
     }
 }

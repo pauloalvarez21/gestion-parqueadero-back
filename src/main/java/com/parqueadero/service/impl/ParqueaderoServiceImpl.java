@@ -18,6 +18,7 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -475,8 +476,8 @@ public class ParqueaderoServiceImpl implements ParqueaderoService {
     @Override
     @Transactional
     public ResolucionFacturaDTO configurarResolucion(ResolucionFacturaDTO request) {
-        log.info("Configurando nueva resolución DIAN: {}", request.getNumeroResolucion());
-        
+        log.info("Configurando resolución DIAN: {}", request.getNumeroResolucion());
+
         // Desactivar resoluciones anteriores
         resolucionFacturaRepository.findAll().stream()
                 .filter(ResolucionFactura::isActiva)
@@ -485,20 +486,43 @@ public class ParqueaderoServiceImpl implements ParqueaderoService {
                     resolucionFacturaRepository.save(r);
                 });
 
-        ResolucionFactura resolucion = ResolucionFactura.builder()
-                .numeroResolucion(request.getNumeroResolucion())
-                .fechaResolucion(request.getFechaResolucion())
-                .prefijo(request.getPrefijo())
-                .numeroDesde(request.getNumeroDesde())
-                .numeroHasta(request.getNumeroHasta())
-                .numeroActual(request.getNumeroActual())
-                .fechaInicio(request.getFechaInicio())
-                .fechaFin(request.getFechaFin())
-                .activa(true)
-                .mensajePiePagina(request.getMensajePiePagina())
-                .build();
-        
-        resolucion = resolucionFacturaRepository.save(resolucion);
+        ResolucionFactura resolucion;
+
+        // Buscar si ya existe una resolución con el mismo número
+        Optional<ResolucionFactura> existente = resolucionFacturaRepository.findByNumeroResolucion(request.getNumeroResolucion());
+
+        if (existente.isPresent()) {
+            // Actualizar resolución existente
+            ResolucionFactura r = existente.get();
+            r.setFechaResolucion(request.getFechaResolucion());
+            r.setPrefijo(request.getPrefijo());
+            r.setNumeroDesde(request.getNumeroDesde());
+            r.setNumeroHasta(request.getNumeroHasta());
+            r.setNumeroActual(request.getNumeroActual());
+            r.setFechaInicio(request.getFechaInicio());
+            r.setFechaFin(request.getFechaFin());
+            r.setActiva(true);
+            r.setMensajePiePagina(request.getMensajePiePagina());
+            resolucion = resolucionFacturaRepository.save(r);
+            log.info("Resolución actualizada: {}", request.getNumeroResolucion());
+        } else {
+            // Crear nueva resolución
+            resolucion = ResolucionFactura.builder()
+                    .numeroResolucion(request.getNumeroResolucion())
+                    .fechaResolucion(request.getFechaResolucion())
+                    .prefijo(request.getPrefijo())
+                    .numeroDesde(request.getNumeroDesde())
+                    .numeroHasta(request.getNumeroHasta())
+                    .numeroActual(request.getNumeroActual())
+                    .fechaInicio(request.getFechaInicio())
+                    .fechaFin(request.getFechaFin())
+                    .activa(true)
+                    .mensajePiePagina(request.getMensajePiePagina())
+                    .build();
+            resolucion = resolucionFacturaRepository.save(resolucion);
+            log.info("Nueva resolución creada: {}", request.getNumeroResolucion());
+        }
+
         return mapper.toResolucionDTO(resolucion);
     }
 

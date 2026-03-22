@@ -197,6 +197,7 @@ public class DataInitializer implements CommandLineRunner {
                     .fechaFin(LocalDate.now().plusYears(1))
                     .activa(true)
                     .mensajePiePagina("Factura de prueba autorizada por la DIAN")
+                    .nitEmpresa("900123456-1")
                     .build();
             resolucionFacturaRepository.save(resolucion);
             log.info("Resolución de facturación DIAN creada exitosamente: {} {}-{}", 

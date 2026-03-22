@@ -22,4 +22,5 @@ public class ResolucionFacturaDTO {
     private LocalDate fechaFin;
     private boolean activa;
     private String mensajePiePagina;
+    private String nitEmpresa;
 }

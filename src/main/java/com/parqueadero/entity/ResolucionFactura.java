@@ -50,7 +50,10 @@ public class ResolucionFactura {
     
     @Column(name = "mensaje_pie_pagina", length = 500)
     private String mensajePiePagina;
-    
+
+    @Column(name = "nit_empresa", length = 20)
+    private String nitEmpresa;
+
     @Column(name = "creado_en")
     private LocalDateTime creadoEn;
 
