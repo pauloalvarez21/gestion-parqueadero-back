@@ -15,6 +15,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/parqueadero")
 @RequiredArgsConstructor
+@CrossOrigin(origins = {"https://gaelectronica.infinityfreeapp.com", "http://localhost:4200"}, allowedHeaders = "*", exposedHeaders = "Authorization")
 public class ParqueaderoController {
 
     private final ParqueaderoService parqueaderoService;

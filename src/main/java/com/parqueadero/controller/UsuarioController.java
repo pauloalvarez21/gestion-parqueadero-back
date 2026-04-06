@@ -16,6 +16,7 @@ import java.util.List;
 @RequestMapping("/api/usuarios")
 @RequiredArgsConstructor
 @SecurityRequirement(name = "bearerAuth") // Para la documentación de Swagger
+@CrossOrigin(origins = {"https://gaelectronica.infinityfreeapp.com", "http://localhost:4200"}, allowedHeaders = "*", exposedHeaders = "Authorization")
 public class UsuarioController {
 
     private final UsuarioService usuarioService;
