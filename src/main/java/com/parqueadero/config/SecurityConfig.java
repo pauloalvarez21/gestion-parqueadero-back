@@ -34,6 +34,8 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable) // 1. Desactiva CSRF (Soluciona el 403 en POST)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource())) // 2. Habilita y configura CORS
                 .authorizeHttpRequests(authorize -> authorize
+                        // 0. Permitir explícitamente peticiones OPTIONS (Preflight)
+                        .requestMatchers(org.springframework.web.cors.CorsUtils::isPreFlightRequest).permitAll()
                         // 1. Endpoints públicos (autenticación y documentación)
                         .requestMatchers(
                                 "/api/auth/**",
@@ -81,9 +83,10 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(allowedOrigins); // Origen configurable
+        configuration.setAllowedOriginPatterns(allowedOrigins); // Usa patrones para mayor flexibilidad
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
+        configuration.setExposedHeaders(List.of("Authorization", "Content-Type")); // Expone headers al frontend
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
