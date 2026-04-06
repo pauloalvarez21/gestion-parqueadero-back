@@ -11,9 +11,6 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
@@ -31,8 +28,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(AbstractHttpConfigurer::disable) // 1. Desactiva CSRF (Soluciona el 403 en POST)
-                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // 2. Habilita y configura CORS
+                .csrf(AbstractHttpConfigurer::disable) // 1. Desactiva CSRF
                 .authorizeHttpRequests(authorize -> authorize
                         // 0. Permitir explícitamente peticiones OPTIONS (Preflight)
                         .requestMatchers(org.springframework.web.cors.CorsUtils::isPreFlightRequest).permitAll()
@@ -62,7 +58,6 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/tarifas/**").hasAnyAuthority("ADMIN", "OPERADOR")
 
                         // 4. Endpoints Operativos (ADMIN y OPERADOR)
-                        // Corregido: los paths del controlador son /entrada y /salida
                         .requestMatchers("/api/parqueadero/entrada", "/api/parqueadero/salida").hasAnyAuthority("ADMIN", "OPERADOR")
                         .requestMatchers(HttpMethod.GET, "/api/parqueadero/**").hasAnyAuthority("ADMIN", "OPERADOR")
 
@@ -78,19 +73,5 @@ public class SecurityConfig {
                 .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()));
 
         return http.build();
-    }
-
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(allowedOrigins); // Usa patrones para mayor flexibilidad
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
-        configuration.setExposedHeaders(List.of("Authorization", "Content-Type")); // Expone headers al frontend
-        configuration.setAllowCredentials(true);
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration); // Aplica la configuración a todas las rutas
-        return source;
     }
 }
